@@ -1,0 +1,102 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 String            @id @default(cuid())
+  initData           String
+  name               String
+  icon               String
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  chatId String?
+  tasks              Task[]
+  friends            UserFriend[]      @relation("UserToFriends")
+  friendOf           UserFriend[]      @relation("FriendToUsers")
+  taskParticipations TaskParticipant[]
+  rewards            Rewards[]
+  sentReports        Reports[]         @relation("Sender")
+  receivedReports    Reports[]         @relation("Receiver")
+}
+
+model UserFriend {
+  id        String       @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime     @default(now())
+  user      User         @relation("UserToFriends", fields: [userId], references: [id])
+  friend    User         @relation("FriendToUsers", fields: [friendId], references: [id])
+ status friendStatus @default(PENDING)
+
+}
+
+enum friendStatus {
+  PENDING
+  ACCEPTED
+}
+
+model Task {
+  id        String     @id @default(cuid())
+  title     String
+  type      TaskType
+  status    TaskStatus
+  timeout   String
+  endTime String?
+  createdAt DateTime   @default(now())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id])
+  participants TaskParticipant[]
+}
+
+enum TaskStatus {
+  COMPLETED
+  IN_PROGRESS
+  CANCELLED
+}
+
+enum TaskType {
+  SINGLE
+  MULTI
+}
+
+model TaskParticipant {
+  id     String @id @default(cuid())
+  taskId String
+  userId String
+
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([taskId, userId])
+}
+
+model Rewards {
+  id          String @id @default(cuid())
+  title       String
+  description String
+  userId      String
+  user        User   @relation(fields: [userId], references: [id])
+}
+
+model Reports {
+  id         String   @id @default(cuid())
+  senderId   String
+  receiverId String
+  text       String
+  createdAt  DateTime @default(now())
+  sender     User     @relation("Sender", fields: [senderId], references: [id])
+  receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
+}

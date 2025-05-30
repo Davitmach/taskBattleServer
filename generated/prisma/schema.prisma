@@ -1,0 +1,80 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       String @id @default(cuid())
+  initData String
+
+  name      String
+  icon      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tasks              Task[]
+  friends            UserFriend[]      @relation("UserToFriends")
+  friendOf           UserFriend[]      @relation("FriendToUsers")
+  taskParticipations TaskParticipant[]
+}
+
+model UserFriend {
+  id        String   @id @default(cuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+
+  user   User @relation("UserToFriends", fields: [userId], references: [id])
+  friend User @relation("FriendToUsers", fields: [friendId], references: [id])
+}
+
+model Task {
+  id        String     @id @default(cuid())
+  title     String
+  type      TaskType
+  status    TaskStatus
+  timeout   String
+  startTime String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
+
+  participants TaskParticipant[]
+}
+
+enum TaskStatus {
+  COMPLETED
+  IN_PROGRESS
+  CANCELLED
+}
+
+enum TaskType {
+  SINGLE
+  MULTI
+}
+
+model TaskParticipant {
+  id     String @id @default(cuid())
+  taskId String
+  userId String
+
+  task Task @relation(fields: [taskId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@unique([taskId, userId])
+}
