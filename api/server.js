@@ -5,7 +5,10 @@ import { CancelTask, Chart, CompleteTask, DeleteOrCancelFriend, FriendAccept, Fr
 
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000',
+  credentials: true // если используешь куки, авторизацию и т.д.
+}));
 app.use(express.json());
 /// post
 app.post('/api/user/welcome',Welcome)
@@ -24,5 +27,5 @@ app.get('/api/user/friend/deleteOrCancel/:id',DeleteOrCancelFriend)
 app.get('/api/user/friend/accept/:id',FriendAccept)
 app.get('/api/user/task/complete/:id',CompleteTask)
 app.get('/api/user/task/cancel/:id',CancelTask)
-app.get('/api/user/chart',Chart)
+app.get('/api/user/chart',Chart) 
 app.listen(process.env.PORT)
