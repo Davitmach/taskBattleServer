@@ -1,20 +1,13 @@
 import { Telegraf, Markup } from 'telegraf';
-import dotenv from 'dotenv';
+import dotenv from 'dotenv'
 import { PrismaClient } from '@prisma/client';
-
-dotenv.config();
 const prisma = new PrismaClient();
+dotenv.config()
+export const bot = new Telegraf(process.env.TG_BOT_TOKEN);
 
-const TOKEN = process.env.TG_BOT_TOKEN;
-const DOMAIN = 'https://taskbattleserver.onrender.com'; // твой Render-домен
+bot.start(async(ctx) => {
 
-if (!TOKEN) {
-  throw new Error("TG_BOT_TOKEN не указан в .env");
-}
 
-export const bot = new Telegraf(TOKEN);
-
-bot.start(async (ctx) => {
   ctx.reply(
     `Привет, воин продуктивности! ⚔️
 
@@ -28,13 +21,21 @@ bot.start(async (ctx) => {
   );
 });
 
-// ✅ Вебхук вместо polling:
-bot.launch({
-  webhook: {
-    domain: DOMAIN,
-    port: process.env.PORT || 3000,
-    hookPath: `/${TOKEN}`,
-  },
-});
+const DOMAIN = 'https://taskbattleserver.onrender.com'; 
+const TOKEN = process.env.TG_BOT_TOKEN; 
 
-console.log('🤖 Бот запущен через Webhook!');
+// Если хочешь использовать вебхук, раскомментируй этот блок:
+
+// bot.launch({
+//   webhook: {
+//     domain: DOMAIN,
+//     port: 3003,
+//     hookPath: `/${TOKEN}`
+//   }
+// });
+
+
+// Или просто запускай так:
+bot.launch();
+
+console.log('🤖 Bot запущен и ждёт команд!');
