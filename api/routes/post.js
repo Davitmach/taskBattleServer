@@ -327,6 +327,236 @@ else {
   res.status(200).json({ status: 'success', data: users });
 }
 }
+// export const Welcome = async (req, res) => {
+//   const { name, icon, chatId } = req.body || {};
+//   if (!name || !icon || !chatId) {
+//     return res.status(404).json({ status: 'name, chatid and icon are required' });
+//   }
+
+//   const initData = req.headers['tg-init-data'];
+//   if (!initData) {
+//     return res.status(404).json({ status: 'initData is required' });
+//   }
+
+//   const user = await prisma.user.findFirst({
+//     where: { initData },
+//     select: {
+//       id: true,
+//       name: true,
+//       icon: true,
+//       chatId: true,
+//       createdAt:true,
+      
+//       tasks: {
+//         include: {
+//           user: true,
+//           participants: {
+//             include: {
+//               user: {
+//                 select: { id: true, name: true, icon: true },
+//               },
+//             },
+//           },
+//         },
+//       },
+//       taskParticipations: {
+//         select: {
+//           task: {
+//             include: {
+//               user: true,
+//               participants: {
+//                 include: {
+//                   user: {
+//                     select: { id: true, name: true, icon: true },
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//         },
+//       },
+//       rewards:{
+//         select:{
+//           title: true,
+//           description: true,
+//         }
+//       }
+//     },
+//   });
+
+//   if (!user) {
+//     // Если пользователя нет, создаем
+//     await prisma.user.create({
+//       data: {
+//         initData,
+//         name: String(name),
+//         icon: String(icon),
+//         chatId: String(chatId),
+//       },
+//     });
+//     return res.status(404).json({ status: 'unauthorized' });
+//   }
+
+//  const reports = await prisma.reports.findMany({
+//   where:{
+//     receiverId: user.id,
+//   }
+//  })
+// if (reports.length > 10) {
+  
+  
+//   SendMessage(`Ваш аккаунт заблокирован`, user.chatId);
+
+//   await prisma.rewards.deleteMany({
+//     where: { userId: user.id },
+//   });
+
+//   // Получаем все задачи, созданные этим пользователем
+//   const userTasks = await prisma.task.findMany({
+//     where: { userId: user.id },
+//     select: { id: true },
+//   });
+
+//   const userTaskIds = userTasks.map(task => task.id);
+
+//   if (userTaskIds.length > 0) {
+//     // Удаляем участников этих задач
+//     await prisma.taskParticipant.deleteMany({
+//       where: { taskId: { in: userTaskIds } },
+//     });
+
+//     // Удаляем задачи
+//     await prisma.task.deleteMany({
+//       where: { id: { in: userTaskIds } },
+//     });
+//   }
+//  await prisma.reports.deleteMany({
+//     where: { receiverId: user.id },
+//   });
+//   await prisma.userFriend.deleteMany({
+//     where: { OR: [{ userId: user.id }, { friendId: user.id }] },
+//   })
+
+//   await prisma.user.delete({
+//     where: { id: user.id },
+//   })
+ 
+
+//   return res.status(403).json({ status: 'blocked', message: 'Your account is blocked due to reports.' });
+// }
+
+ 
+
+//   function calcTimeout(endTime) {
+//     if (!endTime) return null;
+//    const nowStr = localISOStringWithZ();
+
+// const now = new Date(nowStr); 
+
+// const end = new Date(endTime);
+
+// const diffMs = end.getTime() - now.getTime();
+
+
+//     return Math.floor(diffMs / 60000);
+//   }
+
+//   const ownTasks = user.tasks
+//     .map(task => ({
+//       ...task,
+//       isOwner: true,
+//        timeout: task.status=='IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
+//     }))
+//     .filter(task => task.timeout !== null);
+
+//   const participatedTasks = user.taskParticipations
+//     .map(({ task }) => ({
+//       ...task,
+//       isOwner: task.userId === user.id,
+//     timeout: task.status=='IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
+//     }))
+//     .filter(task => task.timeout !== null);
+
+//   const taskMap = new Map();
+//   [...ownTasks, ...participatedTasks].forEach(task => {
+//     taskMap.set(task.id, task);
+//   });
+// function getRandomElement(arr) {
+//   return arr[Math.floor(Math.random() * arr.length)];
+// }
+
+// function generateTaskComment(task, now = new Date()) {
+//   if (task.status !== 'COMPLETED' || !task.endTime) return null;
+
+//   const end = new Date(task.endTime);
+//   const diffMinutes = Math.floor((end - now) / 60000); // end - now
+
+//   if (diffMinutes >= 15) {
+//     return getRandomElement([
+//       'Вау, с запасом справился! 💪',
+//       'Мастер тайм-менеджмента!',
+//       'Ты сделал это быстрее, чем я успел моргнуть 👀',
+//       'Настоящий профи — всё заранее!',
+//     ]);
+//   } else if (diffMinutes >= 0) {
+//     return getRandomElement([
+//       'Успел вовремя, хорошая работа! 👍',
+//       'Как по часам ⏰',
+//       'Точно в срок — приятно видеть!',
+//       'Ты как швейцарские часы!',
+//     ]);
+//   } else if (diffMinutes >= -10) {
+//     return getRandomElement([
+//       'Чуть-чуть не успел, но всё равно молодец!',
+//       'На грани, но сойдёт 😅',
+//       'Опоздание небольшое, бывает...',
+//       'Следующий раз чуть быстрее — и будет идеально!',
+//     ]);
+//   } else {
+//     return getRandomElement([
+//       'Ты где пропадал? 😅',
+//       'Опоздание уровня "школа жизни"',
+//       'Эта задача уже покрылась пылью...',
+//       'Нужно срочно качать дедлайн-мышцу! 🕰️',
+//     ]);
+//   }
+// }
+//   const tasks = Array.from(taskMap.values()).map(task => {
+//     const amOwner = task.userId === user.id;
+
+//     return {
+//       id: task.id,
+//       title: task.title,
+//       timeout: task.timeout,
+//       type: task.type,
+//       status: task.status,
+//       endTime: task.endTime,
+//       owner: {
+//         id: task.user.id,
+//         name: task.user.name,
+//         icon: task.user.icon,
+//       },
+//       participants: task.participants
+//         .filter(p => amOwner || p.user.id !== user.id)
+//         .map(p => ({
+//           id: p.user.id,
+//           name: p.user.name,
+//           icon: p.user.icon,
+//         })), comment: generateTaskComment(task),
+//     };
+//   });
+
+//   return res.status(200).json({ status: 'authorized', tasks, user: {
+//     id: user.id,
+//     name: user.name,
+//     icon: user.icon,
+//     chatId: user.chatId,
+//     createdAt: user.createdAt,
+//     updatedAt: user.updatedAt,
+//     rewards: user.rewards || [],
+//   }});
+// };
+
 export const Welcome = async (req, res) => {
   const { name, icon, chatId } = req.body || {};
   if (!name || !icon || !chatId) {
@@ -345,8 +575,8 @@ export const Welcome = async (req, res) => {
       name: true,
       icon: true,
       chatId: true,
-      createdAt:true,
-      
+      createdAt: true,
+      updatedAt: true,
       tasks: {
         include: {
           user: true,
@@ -375,17 +605,16 @@ export const Welcome = async (req, res) => {
           },
         },
       },
-      rewards:{
-        select:{
+      rewards: {
+        select: {
           title: true,
           description: true,
-        }
-      }
+        },
+      },
     },
   });
 
   if (!user) {
-    // Если пользователя нет, создаем
     await prisma.user.create({
       data: {
         initData,
@@ -397,67 +626,63 @@ export const Welcome = async (req, res) => {
     return res.status(404).json({ status: 'unauthorized' });
   }
 
- const reports = await prisma.reports.findMany({
-  where:{
-    receiverId: user.id,
-  }
- })
-if (reports.length > 10) {
-  
-  
-  SendMessage(`Ваш аккаунт заблокирован`, user.chatId);
-
-  await prisma.rewards.deleteMany({
-    where: { userId: user.id },
+  const reports = await prisma.reports.findMany({
+    where: {
+      receiverId: user.id,
+    },
   });
 
-  // Получаем все задачи, созданные этим пользователем
-  const userTasks = await prisma.task.findMany({
-    where: { userId: user.id },
-    select: { id: true },
-  });
+  if (reports.length > 10) {
+    SendMessage(`Ваш аккаунт заблокирован`, user.chatId);
 
-  const userTaskIds = userTasks.map(task => task.id);
-
-  if (userTaskIds.length > 0) {
-    // Удаляем участников этих задач
-    await prisma.taskParticipant.deleteMany({
-      where: { taskId: { in: userTaskIds } },
+    await prisma.rewards.deleteMany({
+      where: { userId: user.id },
     });
 
-    // Удаляем задачи
-    await prisma.task.deleteMany({
-      where: { id: { in: userTaskIds } },
+    const userTasks = await prisma.task.findMany({
+      where: { userId: user.id },
+      select: { id: true },
     });
+
+    const userTaskIds = userTasks.map(task => task.id);
+
+    if (userTaskIds.length > 0) {
+      await prisma.taskParticipant.deleteMany({
+        where: { taskId: { in: userTaskIds } },
+      });
+
+      await prisma.task.deleteMany({
+        where: { id: { in: userTaskIds } },
+      });
+    }
+
+    await prisma.reports.deleteMany({
+      where: { receiverId: user.id },
+    });
+
+    await prisma.userFriend.deleteMany({
+      where: { OR: [{ userId: user.id }, { friendId: user.id }] },
+    });
+
+    await prisma.user.delete({
+      where: { id: user.id },
+    });
+
+    return res.status(403).json({ status: 'blocked', message: 'Your account is blocked due to reports.' });
   }
- await prisma.reports.deleteMany({
-    where: { receiverId: user.id },
-  });
-  await prisma.userFriend.deleteMany({
-    where: { OR: [{ userId: user.id }, { friendId: user.id }] },
-  })
 
-  await prisma.user.delete({
-    where: { id: user.id },
-  })
- 
-
-  return res.status(403).json({ status: 'blocked', message: 'Your account is blocked due to reports.' });
-}
-
- 
+  function localISOStringWithZ() {
+    const now = new Date();
+    const tzOffset = now.getTimezoneOffset() * 60000;
+    return new Date(now - tzOffset).toISOString().slice(0, -1) + 'Z';
+  }
 
   function calcTimeout(endTime) {
     if (!endTime) return null;
-   const nowStr = localISOStringWithZ();
-
-const now = new Date(nowStr); 
-
-const end = new Date(endTime);
-
-const diffMs = end.getTime() - now.getTime();
-
-
+    const nowStr = localISOStringWithZ();
+    const now = new Date(nowStr);
+    const end = new Date(endTime);
+    const diffMs = end.getTime() - now.getTime();
     return Math.floor(diffMs / 60000);
   }
 
@@ -465,7 +690,7 @@ const diffMs = end.getTime() - now.getTime();
     .map(task => ({
       ...task,
       isOwner: true,
-       timeout: task.status=='IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
+      timeout: task.status === 'IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
     }))
     .filter(task => task.timeout !== null);
 
@@ -473,7 +698,7 @@ const diffMs = end.getTime() - now.getTime();
     .map(({ task }) => ({
       ...task,
       isOwner: task.userId === user.id,
-    timeout: task.status=='IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
+      timeout: task.status === 'IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
     }))
     .filter(task => task.timeout !== null);
 
@@ -481,46 +706,48 @@ const diffMs = end.getTime() - now.getTime();
   [...ownTasks, ...participatedTasks].forEach(task => {
     taskMap.set(task.id, task);
   });
-function getRandomElement(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
 
-function generateTaskComment(task, now = new Date()) {
-  if (task.status !== 'COMPLETED' || !task.endTime) return null;
-
-  const end = new Date(task.endTime);
-  const diffMinutes = Math.floor((end - now) / 60000); // end - now
-
-  if (diffMinutes >= 15) {
-    return getRandomElement([
-      'Вау, с запасом справился! 💪',
-      'Мастер тайм-менеджмента!',
-      'Ты сделал это быстрее, чем я успел моргнуть 👀',
-      'Настоящий профи — всё заранее!',
-    ]);
-  } else if (diffMinutes >= 0) {
-    return getRandomElement([
-      'Успел вовремя, хорошая работа! 👍',
-      'Как по часам ⏰',
-      'Точно в срок — приятно видеть!',
-      'Ты как швейцарские часы!',
-    ]);
-  } else if (diffMinutes >= -10) {
-    return getRandomElement([
-      'Чуть-чуть не успел, но всё равно молодец!',
-      'На грани, но сойдёт 😅',
-      'Опоздание небольшое, бывает...',
-      'Следующий раз чуть быстрее — и будет идеально!',
-    ]);
-  } else {
-    return getRandomElement([
-      'Ты где пропадал? 😅',
-      'Опоздание уровня "школа жизни"',
-      'Эта задача уже покрылась пылью...',
-      'Нужно срочно качать дедлайн-мышцу! 🕰️',
-    ]);
+  function getRandomElement(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
   }
-}
+
+  function generateTaskComment(task, now = new Date()) {
+    if (task.status !== 'COMPLETED' || !task.endTime) return null;
+
+    const end = new Date(task.endTime);
+    const diffMinutes = Math.floor((end - now) / 60000);
+
+    if (diffMinutes >= 15) {
+      return getRandomElement([
+        'Вау, с запасом справился! 💪',
+        'Мастер тайм-менеджмента!',
+        'Ты сделал это быстрее, чем я успел моргнуть 👀',
+        'Настоящий профи — всё заранее!',
+      ]);
+    } else if (diffMinutes >= 0) {
+      return getRandomElement([
+        'Успел вовремя, хорошая работа! 👍',
+        'Как по часам ⏰',
+        'Точно в срок — приятно видеть!',
+        'Ты как швейцарские часы!',
+      ]);
+    } else if (diffMinutes >= -10) {
+      return getRandomElement([
+        'Чуть-чуть не успел, но всё равно молодец!',
+        'На грани, но сойдёт 😅',
+        'Опоздание небольшое, бывает...',
+        'Следующий раз чуть быстрее — и будет идеально!',
+      ]);
+    } else {
+      return getRandomElement([
+        'Ты где пропадал? 😅',
+        'Опоздание уровня "школа жизни"',
+        'Эта задача уже покрылась пылью...',
+        'Нужно срочно качать дедлайн-мышцу! 🕰️',
+      ]);
+    }
+  }
+
   const tasks = Array.from(taskMap.values()).map(task => {
     const amOwner = task.userId === user.id;
 
@@ -542,18 +769,37 @@ function generateTaskComment(task, now = new Date()) {
           id: p.user.id,
           name: p.user.name,
           icon: p.user.icon,
-        })), comment: generateTaskComment(task),
+        })),
+      comment: generateTaskComment(task),
     };
   });
 
-  return res.status(200).json({ status: 'authorized', tasks, user: {
-    id: user.id,
-    name: user.name,
-    icon: user.icon,
-    chatId: user.chatId,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-    rewards: user.rewards || [],
-  }});
-};
+  // Подсчёт задач по статусу
+  const allTasks = [...ownTasks, ...participatedTasks];
+  const taskCounter = {
+    cancelled: 0,
+    in_progress: 0,
+    completed: 0,
+  };
 
+  for (const task of allTasks) {
+    if (task.status === 'CANCELLED') taskCounter.cancelled += 1;
+    if (task.status === 'IN_PROGRESS') taskCounter.in_progress += 1;
+    if (task.status === 'COMPLETED') taskCounter.completed += 1;
+  }
+
+  return res.status(200).json({
+    status: 'authorized',
+    tasks,
+    taskCounter,
+    user: {
+      id: user.id,
+      name: user.name,
+      icon: user.icon,
+      chatId: user.chatId,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      rewards: user.rewards || [],
+    },
+  });
+};
