@@ -10,7 +10,7 @@ app.use(cors({
   credentials: true // если используешь куки, авторизацию и т.д.
 }));
 app.use(express.json());
-/// post
+/// post 
 app.post('/api/user/welcome',Welcome)
 app.post('/api/user/search',Search)
 app.post('/api/user/report',Report)
