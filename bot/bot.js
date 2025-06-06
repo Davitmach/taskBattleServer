@@ -26,16 +26,16 @@ const TOKEN = process.env.TG_BOT_TOKEN;
 
 // Если хочешь использовать вебхук, раскомментируй этот блок:
 
-// bot.launch({
-//   webhook: {
-//     domain: DOMAIN,
-//     port: 3003,
-//     hookPath: `/${TOKEN}`
-//   }
-// });
+bot.launch({
+  webhook: {
+    domain: DOMAIN,
+    port: 3003,
+    hookPath: `/${TOKEN}`
+  }
+});
 
 
 // Или просто за пускай так:
-bot.launch();
+// bot.launch();
 
 console.log('🤖 Bot запущен и ждёт команд!');
