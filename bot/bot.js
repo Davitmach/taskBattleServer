@@ -21,14 +21,16 @@ bot.start(async(ctx) => {
   );
 });
 
-const PORT = parseInt(process.env.PORT || '3000', 10); // используем PORT от Render
-const DOMAIN = 'https://taskbattleserver.onrender.com'; // адрес деплоя
+const DOMAIN = 'https://taskbattleserver.onrender.com'; 
+const TOKEN = process.env.TG_BOT_TOKEN; 
+
+// Если хочешь использовать вебхук, раскомментируй этот блок:
 
 bot.launch({
   webhook: {
     domain: DOMAIN,
-    port: PORT,
-    hookPath: `/${process.env.TG_BOT_TOKEN}`
+    port: 3003,
+    hookPath: `/${TOKEN}`
   }
 });
 
