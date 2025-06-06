@@ -29,7 +29,7 @@ const TOKEN = process.env.TG_BOT_TOKEN;
 bot.launch({
   webhook: {
     domain: DOMAIN,
-    port: 3002,
+    port: 3000,
     hookPath: `/${TOKEN}`
   }
 });
