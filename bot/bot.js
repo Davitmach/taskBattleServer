@@ -5,7 +5,7 @@ import { PrismaClient } from '@prisma/client';
 dotenv.config();
 
 const prisma = new PrismaClient();
-const bot = new Telegraf(process.env.TG_BOT_TOKEN);
+export const bot = new Telegraf(process.env.TG_BOT_TOKEN);
 
 // Команда /start
 bot.start(async (ctx) => {
