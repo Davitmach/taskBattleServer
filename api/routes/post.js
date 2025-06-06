@@ -345,6 +345,7 @@ export const Welcome = async (req, res) => {
       name: true,
       icon: true,
       chatId: true,
+      createdAt:true,
       
       tasks: {
         include: {
