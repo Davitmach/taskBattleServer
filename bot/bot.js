@@ -25,6 +25,8 @@ const DOMAIN = 'https://taskbattleserver.onrender.com';
 const TOKEN = process.env.TG_BOT_TOKEN; 
 
 // Если хочешь использовать вебхук, раскомментируй этот блок:
+   
+
 
 bot.launch({
   webhook: {
