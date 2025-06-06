@@ -6,7 +6,7 @@ import { CancelTask, Chart, CompleteTask, DeleteOrCancelFriend, FriendAccept, Fr
 
 const app = express();
 app.use(cors({
-  origin: ['http://localhost:3000','https://task-battle.vercel.app/'],
+  origin: ['http://localhost:3000','https://task-battle.vercel.app'],
   credentials: true // если используешь куки, авторизацию и т.д.
 }));
 app.use(express.json());
