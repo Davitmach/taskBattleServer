@@ -2,6 +2,7 @@ import { PrismaClient } from "@prisma/client";
 import { SendFriendRequest, SendMessage } from "../../bot/handlers.js";
 import { localISOStringWithZ } from "../../utils/localtime.js";
 import { subDays, subWeeks, subMonths, format, startOfDay } from "date-fns";
+import { parseInitData } from "../../utils/getuserid.js";
 const prisma = new PrismaClient();
 export const Friends = async (req, res) => {
   const initData = req.headers['tg-init-data'];
@@ -9,9 +10,9 @@ export const Friends = async (req, res) => {
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
-
+const parsedUserId = parseInitData(initData)?.user?.id;
   const user = await prisma.user.findFirst({
-    where: { initData }
+    where: { initData:String(parsedUserId) }
   });
 
   if (!user) {
@@ -54,9 +55,9 @@ export const Tasks = async (req, res) => {
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
-
+const parsedUserId = parseInitData(initData)?.user?.id;
   const user = await prisma.user.findFirst({
-    where: { initData },
+    where: { initData:String(parsedUserId) },
     select: {
       id: true,
       taskParticipations: {
@@ -209,9 +210,9 @@ export const User = async (req, res) => {
 
   const targetUserId = String(req.params.id);
 
-  
+  const parsedUserId = parseInitData(initData)?.user?.id;
   const currentUser = await prisma.user.findFirst({
-    where: { initData },
+    where: { initData:String(parsedUserId) },
     select: { id: true }
   });
 
@@ -389,9 +390,9 @@ export const FriendAdd = async (req, res) => {
   if (!id) {
     return res.status(400).json({ status: 'Invalid user ID' });
   }
-
+const parsedUserId = parseInitData(initData)?.user?.id;
   const currentUser = await prisma.user.findFirst({
-    where: { initData },
+    where: { initData:String(parsedUserId) },
     select: { id: true,name:true }
   });
 
@@ -527,9 +528,9 @@ export const CancelTask = async (req, res) => {
   if (!id) {
     return res.status(400).json({ status: 'Invalid Task ID' });
   }
-
+const parsedUserId = parseInitData(initData)?.user?.id;
   const currentUser = await prisma.user.findFirst({
-    where: { initData },
+    where: { initData:String(parsedUserId) },
   });
 
   if (!currentUser) {
@@ -583,9 +584,9 @@ export const CompleteTask = async (req, res) => {
   if (!id) {
     return res.status(400).json({ status: 'Invalid Task ID' });
   }
-
+const parsedUserId = parseInitData(initData)?.user?.id;
   const currentUser = await prisma.user.findFirst({
-    where: { initData },
+    where: { initData:String(parsedUserId) },
   });
 
   if (!currentUser) {
@@ -683,9 +684,9 @@ export const Chart = async (req, res) => {
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
-
+const parsedUserId = parseInitData(initData)?.user?.id;
   const user = await prisma.user.findFirst({
-    where: { initData },
+    where: { initData:String(parsedUserId) },
     select: { id: true }
   });
 

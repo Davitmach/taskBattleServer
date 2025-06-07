@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { localISOStringWithZ } from "../../utils/localtime.js";
 import { SendMessage } from "../../bot/handlers.js";
-
+import {parseInitData} from '../../utils/getuserid.js'
 const prisma = new PrismaClient();
 // export const Welcome = async (req, res) => {
 //   const { name, icon, chatId } = req.body || {};
@@ -156,6 +156,7 @@ const initData = req.headers['tg-init-data'];
  if (!initData) {
         return res.status(404).json({ status: 'initData is required' });
     }
+const parsedUserId = parseInitData(initData)?.user?.id;
 const checkUser = await prisma.user.findMany({
   where:{id:userId},
 })
@@ -165,7 +166,7 @@ if(checkUser.length === 0) {
 }
 
     const user = await prisma.user.findMany({
-        where: {initData:initData},
+        where: {initData:String(parsedUserId)},
         select: {
             id: true,
 
@@ -558,6 +559,8 @@ else {
 // };
 
 export const Welcome = async (req, res) => {
+ 
+  
   const { name, icon, chatId } = req.body || {};
   if (!name || !icon || !chatId) {
     return res.status(404).json({ status: 'name, chatid and icon are required' });
@@ -567,9 +570,9 @@ export const Welcome = async (req, res) => {
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
-
+const parsedUserId = parseInitData(initData)?.user?.id;
   const user = await prisma.user.findFirst({
-    where: { initData },
+    where: { initData:String(parsedUserId) },
     select: {
       id: true,
       name: true,
@@ -613,11 +616,13 @@ export const Welcome = async (req, res) => {
       },
     },
   });
+  console.log(user);
+  
 
   if (!user) {
     await prisma.user.create({
       data: {
-        initData,
+        initData:String(parsedUserId),
         name: String(name),
         icon: String(icon),
         chatId: String(chatId),
