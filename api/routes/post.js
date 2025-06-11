@@ -489,7 +489,7 @@ const parsedUserId = parseInitData(initData)?.user?.id;
   }
 
   function generateTaskComment(task, now = new Date()) {
-    if (task.status !== 'COMPLETED' || !task.endTime) return null;
+    if (!task.endTime) return null;
 
     const end = new Date(task.endTime);
     const diffMinutes = Math.floor((end - now) / 60000);
