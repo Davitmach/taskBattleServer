@@ -494,35 +494,36 @@ const parsedUserId = parseInitData(initData)?.user?.id;
     const end = new Date(task.endTime);
     const diffMinutes = Math.floor((end - now) / 60000);
 
-    if (diffMinutes >= 15) {
-  return `<p className="text-[12px] text-white">${getRandomElement([
+   if (diffMinutes >= 15) {
+  return `<p style="font-size: 12px; color: white;">${getRandomElement([
     'Вау, с запасом справился! 💪',
     'Мастер тайм-менеджмента!',
     'Ты сделал это быстрее, чем я успел моргнуть 👀',
     'Настоящий профи — всё заранее!',
   ])}</p>`;
 } else if (diffMinutes >= 0) {
-  return `<p className="text-[12px] text-white">${getRandomElement([
+  return `<p style="font-size: 12px; color: white;">${getRandomElement([
     'Успел вовремя, хорошая работа! 👍',
     'Как по часам ⏰',
     'Точно в срок — приятно видеть!',
     'Ты как швейцарские часы!',
   ])}</p>`;
 } else if (diffMinutes >= -10) {
-  return `<p className="text-[12px] text-yellow-400">${getRandomElement([
+  return `<p style="font-size: 12px; color: #facc15;">${getRandomElement([
     'Чуть-чуть не успел, но всё равно молодец!',
     'На грани, но сойдёт 😅',
     'Опоздание небольшое, бывает...',
     'Следующий раз чуть быстрее — и будет идеально!',
   ])}</p>`;
 } else {
-  return `<p className="text-[12px] text-red-500">${getRandomElement([
+  return `<p style="font-size: 12px; color: #ef4444;">${getRandomElement([
     'Ты где пропадал? 😅',
     'Опоздание уровня "школа жизни"',
     'Эта задача уже покрылась пылью...',
     'Нужно срочно качать дедлайн-мышцу! 🕰️',
   ])}</p>`;
 }
+
 
   }
 
