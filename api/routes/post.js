@@ -80,7 +80,7 @@ export const Search = async (req, res) => {
       icon: true,
       createdAt: true,
       updatedAt: true,
-      tasks: true,
+      // tasks: true,
     },
   });
 
