@@ -3,147 +3,119 @@ import { localISOStringWithZ } from "../../utils/localtime.js";
 import { SendMessage } from "../../bot/handlers.js";
 import {parseInitData} from '../../utils/getuserid.js'
 const prisma = new PrismaClient();
-// export const Welcome = async (req, res) => {
-//   const { name, icon, chatId } = req.body || {};
-//   if (!name || !icon || !chatId) {
-//     return res.status(404).json({ status: 'name, chatid and icon are required' });
-//   }
 
-//   const initData = req.headers['tg-init-data'];
-//   if (!initData) {
-//     return res.status(404).json({ status: 'initData is required' });
-//   }
+// export const Search = async (req,res)=> {
+//   const { username } = req.body || {};
+// if(!username) {
+//     return res.status(404).json({ status: 'username are required' });
+// }
+// if(typeof username !=='string') return res.status(404).json({ status: 'username must be a string' });
+// const initData = req.headers['tg-init-data'];
+//  if (!initData) {
+//         return res.status(404).json({ status: 'initData is required' });
+//     }
 
-//   const user = await prisma.user.findFirst({
-//     where: { initData },
-//     select: {
+//     const user = await prisma.user.findMany({
+//         where: {        
+//             name: {
+//                 contains: username,
+//                 mode: 'insensitive',
+//             },
+//         },
+   
+//         select: {
 //       id: true,
 //       name: true,
 //       icon: true,
-//       chatId: true,
-//       tasks: {
-//         include: {
-//           user: true,
-//           participants: {
-//             include: {
-//               user: {
-//                 select: {
-//                   id: true,
-//                   name: true,
-//                   icon: true,
-//                 }
-//               }
-//             }
-//           }
-//         }
-//       },
-//       taskParticipations: {
-//         select: {
-//           task: {
-//             include: {
-//               user: true,
-//               participants: {
-//                 include: {
-//                   user: {
-//                     select: {
-//                       id: true,
-//                       name: true,
-//                       icon: true,
-//                     }
-//                   }
-//                 }
-//               }
-//             }
-//           }
-//         }
-//       }
-//     }
-//   });
-
-//   if (!user) {
-//     await prisma.user.create({
-//       data: {
-//         initData,
-//         name: String(name),
-//         icon: String(icon),
-//         chatId: String(chatId),
-//       }
+//       createdAt: true,
+//       updatedAt: true,
+//       tasks:true
+//     },
 //     });
-//     return res.status(404).json({ status: 'unauthorized' });
-//   }
+//     res.status(200).json({ status: 'success', data: user });
+// }
 
-//   const ownTasks = user.tasks.map(task => ({
-//     ...task,
-//     isOwner: true,
-//   }));
-
-//   const participatedTasks = user.taskParticipations.map(({ task }) => ({
-//     ...task,
-//     isOwner: task.userId === user.id,
-//   }));
-
-//   const taskMap = new Map();
-//   [...ownTasks, ...participatedTasks].forEach(task => {
-//     taskMap.set(task.id, task);
-//   });
-
-//   const tasks = Array.from(taskMap.values()).map(task => {
-//     const amOwner = task.userId === user.id;
-
-//     return {
-//       id: task.id,
-//       title: task.title,
-//       timeout: task.timeout,
-//       type: task.type,
-//       status: task.status,
-//       endTime: task.endTime,
-//       owner: {
-//         id: task.user.id,
-//         name: task.user.name,
-//         icon: task.user.icon,
-//       },
-//       participants: task.participants
-//         .filter(p => amOwner || p.user.id !== user.id)
-//         .map(p => ({
-//           id: p.user.id,
-//           name: p.user.name,
-//           icon: p.user.icon,
-//         })),
-//     };
-//   });
-
-//   return res.status(200).json({ status: 'authorized', tasks });
-// };
-export const Search = async (req,res)=> {
+export const Search = async (req, res) => {
   const { username } = req.body || {};
-if(!username) {
-    return res.status(404).json({ status: 'username are required' });
-}
-if(typeof username !=='string') return res.status(404).json({ status: 'username must be a string' });
-const initData = req.headers['tg-init-data'];
- if (!initData) {
-        return res.status(404).json({ status: 'initData is required' });
-    }
+  if (!username) {
+    return res.status(404).json({ status: 'username is required' });
+  }
+  if (typeof username !== 'string') {
+    return res.status(404).json({ status: 'username must be a string' });
+  }
 
-    const user = await prisma.user.findMany({
-        where: {        
-            name: {
-                contains: username,
-                mode: 'insensitive',
-            },
-        },
-   
-        select: {
+  const initData = req.headers['tg-init-data'];
+  if (!initData) {
+    return res.status(404).json({ status: 'initData is required' });
+  }
+
+  // Предположим, что в initData содержится chat_id пользователя
+  const searchParams = new URLSearchParams(initData);
+  const chatId = searchParams.get('user') ? JSON.parse(searchParams.get('user')).id : null;
+
+  if (!chatId) {
+    return res.status(404).json({ status: 'chatId not found in initData' });
+  }
+
+  // Получаем текущего пользователя по chatId
+  const currentUser = await prisma.user.findFirst({
+    where: { chatId: String(chatId) }
+  });
+
+  if (!currentUser) {
+    return res.status(404).json({ status: 'Current user not found' });
+  }
+
+  const foundUsers = await prisma.user.findMany({
+    where: {
+      name: {
+        contains: username,
+        mode: 'insensitive',
+      },
+      NOT: { id: currentUser.id } // исключаем самого себя из результатов
+    },
+    select: {
       id: true,
       name: true,
       icon: true,
       createdAt: true,
       updatedAt: true,
-      tasks:true
+      tasks: true,
     },
-    });
-    res.status(200).json({ status: 'success', data: user });
-}
+  });
+
+  // Проверка на дружбу
+  const friends = await prisma.userFriend.findMany({
+    where: {
+      OR: [
+        {
+          userId: currentUser.id,
+          friendId: { in: foundUsers.map(u => u.id) },
+          status: 'ACCEPTED'
+        },
+        {
+          friendId: currentUser.id,
+          userId: { in: foundUsers.map(u => u.id) },
+          status: 'ACCEPTED'
+        }
+      ]
+    }
+  });
+
+  const friendIds = new Set(
+    friends.flatMap(f =>
+      f.userId === currentUser.id ? f.friendId : f.userId
+    )
+  );
+
+  const usersWithFriendStatus = foundUsers.map(user => ({
+    ...user,
+    isFriend: friendIds.has(user.id)
+  }));
+
+  return res.status(200).json({ status: 'success', data: usersWithFriendStatus });
+};
+
 export const Report = async (req,res)=> {
   const { userId, report } = req.body || {};
 if(!userId || !report) {
