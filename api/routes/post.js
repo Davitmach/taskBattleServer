@@ -106,11 +106,12 @@ export const Search = async (req, res) => {
     }
   });
 
-  const friendIds = new Set(
-    friends.flatMap(f =>
-      f.userId === currentUser.id ? f.friendId : f.userId
-    )
-  );
+const friendIds = new Set(
+  friends.map(f =>
+    f.userId === currentUser.id ? f.friendId : f.userId
+  )
+);
+
 
   const usersWithFriendStatus = foundUsers.map(user => ({
     ...user,
