@@ -95,22 +95,26 @@ export const Search = async (req, res) => {
         {
           userId: currentUser.id,
           friendId: { in: foundUsers.map(u => u.id) },
-          status: 'ACCEPTED'
+       status:'ACCEPTED'
         },
         {
           friendId: currentUser.id,
           userId: { in: foundUsers.map(u => u.id) },
-          status: 'ACCEPTED'
+         status:'ACCEPTED'
         }
       ]
     }
   });
+
+ 
 
 const friendIds = new Set(
   friends.map(f =>
     f.userId === currentUser.id ? f.friendId : f.userId
   )
 );
+
+
 
 
   const usersWithFriendStatus = foundUsers.map(user => ({
