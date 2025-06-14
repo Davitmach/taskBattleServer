@@ -31,6 +31,7 @@ const parsedUserId = parseInitData(initData)?.user?.id;
           id: true,
           name: true,
           icon: true,
+          
           _count:{
             select:{
               tasks:true
@@ -229,41 +230,75 @@ export const User = async (req, res) => {
 if(currentUser.id === targetUserId) {
   return res.status(400).json({ status: 'You cannot view your own profile with this endpoint' });
 }
-  const user = await prisma.user.findFirst({
-    where: { id: targetUserId },
-    select: {
-      id: true,
-      name: true,
-      icon: true,
-      createdAt: true,
-      updatedAt: true,
-      rewards: true,
-      tasks: {
-        select: {
-          endTime: true,
-          participants: {
-            select: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  icon: true
-                }
+const user = await prisma.user.findFirst({
+  where: { id: targetUserId },
+  select: {
+    id: true,
+    name: true,
+    icon: true,
+    createdAt: true,
+    updatedAt: true,
+    rewards: true,
+
+    tasks: {
+      select: {
+        endTime: true,
+        participants: {
+          select: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                icon: true
               }
             }
-          },
-          status: true,
-          timeout: true,
-          title: true,
-          type: true,
+          }
+        },
+        status: true,
+        timeout: true,
+        title: true,
+        type: true,
+      }
+    },
+
+    // Получаем друзей
+    friends: {
+      where: { status: 'ACCEPTED' },
+      select: {
+        friend: {
+          select: {
+            id: true,
+            name: true,
+            icon: true
+          }
+        }
+      }
+    },
+    friendOf: {
+      where: { status: 'ACCEPTED' },
+      select: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            icon: true
+          }
         }
       }
     }
-  });
-
+  }
+});
   if (!user) {
     return res.status(404).json({ status: 'User not found' });
   }
+// Собираем список всех друзей
+const allFriends = [
+  ...user.friends.map(f => f.friend),
+  ...user.friendOf.map(f => f.user)
+];
+const { friends, friendOf, ...restUser } = user;
+
+
 
   // Подсчёт задач по статусу
   const taskCounter = {
@@ -325,11 +360,13 @@ else if (friendRelation.status === 'ACCEPTED') {
   return res.status(200).json({
   status: 'success',
   data: {
-    ...user,
+    ...restUser,
     taskCounter,
-    friend: friendStatus
+    friend: friendStatus,
+    friends: allFriends
   }
 });
+
 
 };
 export const Top = async (req, res) => {
