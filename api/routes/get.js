@@ -30,7 +30,13 @@ const parsedUserId = parseInitData(initData)?.user?.id;
         select: {
           id: true,
           name: true,
-          icon: true
+          icon: true,
+          _count:{
+            select:{
+              tasks:true
+            }
+          }
+          
         }
       }
     }
