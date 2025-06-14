@@ -220,87 +220,87 @@ export const User = async (req, res) => {
 
   const parsedUserId = parseInitData(initData)?.user?.id;
   const currentUser = await prisma.user.findFirst({
-    where: { initData:String(parsedUserId) },
+    where: { initData: String(parsedUserId) },
     select: { id: true }
   });
 
   if (!currentUser) {
     return res.status(404).json({ status: 'User not authorized' });
   }
-if(currentUser.id === targetUserId) {
-  return res.status(400).json({ status: 'You cannot view your own profile with this endpoint' });
-}
-const user = await prisma.user.findFirst({
-  where: { id: targetUserId },
-  select: {
-    id: true,
-    name: true,
-    icon: true,
-    createdAt: true,
-    updatedAt: true,
-    rewards: true,
 
-    tasks: {
-      select: {
-        endTime: true,
-        participants: {
-          select: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                icon: true
+  if (currentUser.id === targetUserId) {
+    return res.status(400).json({ status: 'You cannot view your own profile with this endpoint' });
+  }
+
+  const user = await prisma.user.findFirst({
+    where: { id: targetUserId },
+    select: {
+      id: true,
+      name: true,
+      icon: true,
+      createdAt: true,
+      updatedAt: true,
+      rewards: true,
+      tasks: {
+        select: {
+          endTime: true,
+          participants: {
+            select: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  icon: true
+                }
               }
             }
-          }
-        },
-        status: true,
-        timeout: true,
-        title: true,
-        type: true,
-      }
-    },
-
-    // Получаем друзей
-    friends: {
-      where: { status: 'ACCEPTED' },
-      select: {
-        friend: {
-          select: {
-            id: true,
-            name: true,
-            icon: true
+          },
+          status: true,
+          timeout: true,
+          title: true,
+          type: true,
+        }
+      },
+      friends: {
+        where: { status: 'ACCEPTED' },
+        select: {
+          friend: {
+            select: {
+              id: true,
+              name: true,
+              icon: true
+            }
           }
         }
-      }
-    },
-    friendOf: {
-      where: { status: 'ACCEPTED' },
-      select: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            icon: true
+      },
+      friendOf: {
+        where: { status: 'ACCEPTED' },
+        select: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              icon: true
+            }
           }
         }
       }
     }
-  }
-});
+  });
+
   if (!user) {
     return res.status(404).json({ status: 'User not found' });
   }
-// Собираем список всех друзей
-const allFriends = [
-  ...user.friends.map(f => f.friend),
-  ...user.friendOf.map(f => f.user)
-];
-const { friends, friendOf, ...restUser } = user;
 
+  // Объединяем друзей
+  const allFriends = [
+    ...(user.friends ?? []).map(f => f.friend),
+    ...(user.friendOf ?? []).map(f => f.user)
+  ];
 
+  const { friends, friendOf, ...restUser } = user;
 
-  // Подсчёт задач по статусу
+  // Считаем количество задач текущего пользователя по статусу
   const taskCounter = {
     cancelled: 0,
     in_progress: 0,
@@ -315,60 +315,80 @@ const { friends, friendOf, ...restUser } = user;
 
   // Проверка, является ли targetUserId другом currentUser
   const friendRelation = await prisma.userFriend.findFirst({
-  where: {
-    OR: [
-      { userId: currentUser.id, friendId: targetUserId },
-      { userId: targetUserId, friendId: currentUser.id }
-    ]
-  },
-  select: {
-    status: true,
-    userId:true,
-    friendId:true,
-    id:true
-  }
-});
+    where: {
+      OR: [
+        { userId: currentUser.id, friendId: targetUserId },
+        { userId: targetUserId, friendId: currentUser.id }
+      ]
+    },
+    select: {
+      status: true,
+      userId: true,
+      friendId: true,
+      id: true
+    }
+  });
 
-let friendStatus = {
-  status:false,
-  side:null
-};
-if (!friendRelation) {
-  friendStatus = false;
-} else if (friendRelation.status === 'PENDING' && friendRelation.userId === currentUser.id) {
-  friendStatus= {
-    status: 'PENDING',
-    side: 'outgoing',
-    id: friendRelation.id
-  }
-} 
-else if(friendRelation.status === 'PENDING' && friendRelation.friendId === currentUser.id) {
-  friendStatus = {
-    status: 'PENDING',
-    side: 'incoming',
-    id: friendRelation.id
+  let friendStatus = {
+    status: false,
+    side: null
   };
-}
-else if (friendRelation.status === 'ACCEPTED') {
-  friendStatus = {
-    status: 'ACCEPTED',
-    id: friendRelation.id,
-  };
-}
 
+  if (!friendRelation) {
+    friendStatus = false;
+  } else if (friendRelation.status === 'PENDING' && friendRelation.userId === currentUser.id) {
+    friendStatus = {
+      status: 'PENDING',
+      side: 'outgoing',
+      id: friendRelation.id
+    };
+  } else if (friendRelation.status === 'PENDING' && friendRelation.friendId === currentUser.id) {
+    friendStatus = {
+      status: 'PENDING',
+      side: 'incoming',
+      id: friendRelation.id
+    };
+  } else if (friendRelation.status === 'ACCEPTED') {
+    friendStatus = {
+      status: 'ACCEPTED',
+      id: friendRelation.id
+    };
+  }
 
+  // Получаем количество задач у друзей
+  const friendIds = allFriends.map(friend => friend.id);
+
+  const tasksByFriend = await prisma.task.groupBy({
+    by: ['userId'],
+    where: {
+      userId: { in: friendIds }
+    },
+    _count: {
+      _all: true
+    }
+  });
+
+  const friendTaskCounts = Object.fromEntries(
+    tasksByFriend.map(t => [t.userId, t._count._all])
+  );
+
+  const friendsWithTaskCounts = allFriends.map(friend => ({
+    ...friend,
+    taskCount: friendTaskCounts[friend.id] || 0
+  }));
+
+  // Финальный ответ
   return res.status(200).json({
-  status: 'success',
-  data: {
-    ...restUser,
-    taskCounter,
-    friend: friendStatus,
-    friends: allFriends
-  }
-});
-
-
+    status: 'success',
+    data: {
+      ...restUser,
+      taskCounter,
+      friend: friendStatus,
+      friends: friendsWithTaskCounts
+    }
+  });
 };
+
 export const Top = async (req, res) => {
  const initData = req.headers['tg-init-data'];
 
