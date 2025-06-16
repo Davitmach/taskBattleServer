@@ -10,9 +10,10 @@ export const Friends = async (req, res) => {
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
-const parsedUserId = parseInitData(initData)?.user?.id;
+
+  const parsedUserId = parseInitData(initData)?.user?.id;
   const user = await prisma.user.findFirst({
-    where: { initData:String(parsedUserId) }
+    where: { initData: String(parsedUserId) }
   });
 
   if (!user) {
@@ -22,37 +23,47 @@ const parsedUserId = parseInitData(initData)?.user?.id;
   const id = user.id;
 
   const friends = await prisma.userFriend.findMany({
-    where: {  OR: [
-        { userId: id },
-        { friendId: id }
-      ], },
+    where: { 
+      OR: [
+        { userId: id },   // Мы добавили этих друзей
+        { friendId: id }  // Эти друзья добавили нас
+      ],
+   
+    },
     select: {
-      id: true, 
+      id: true,
       status: true,
-      friend: {
+      userId: true,    // Добавляем эти поля для определения направления
+      friendId: true,
+      user: {          // Данные инициатора (когда friendId == id)
         select: {
           id: true,
           name: true,
           icon: true,
-          
-          _count:{
-            select:{
-              tasks:true
-            }
-          }
-          
+          _count: { select: { tasks: true } }
+        }
+      },
+      friend: {        // Данные друга (когда userId == id)
+        select: {
+          id: true,
+          name: true,
+          icon: true,
+          _count: { select: { tasks: true } }
         }
       }
     }
   });
 
   if (friends.length > 0) {
-    // Оставляем id UserFriend вместе с информацией о друге
-    const formattedFriends = friends.map(f => ({
-      userFriendId: f.id,
-      status: f.status,
-      ...f.friend
-    }));
+    const formattedFriends = friends.map(f => {
+      // Если userId == id, то это друг (friend), иначе это пользователь, который нас добавил (user)
+      const friendData = f.userId === id ? f.friend : f.user;
+      return {
+        userFriendId: f.id,
+        status: f.status,
+        ...friendData
+      };
+    });
 
     return res.status(200).json({ status: 'success', data: formattedFriends });
   } else {
