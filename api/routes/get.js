@@ -22,7 +22,10 @@ const parsedUserId = parseInitData(initData)?.user?.id;
   const id = user.id;
 
   const friends = await prisma.userFriend.findMany({
-    where: { userId: id },
+    where: {  OR: [
+        { userId: id },
+        { friendId: id }
+      ], },
     select: {
       id: true, 
       status: true,
