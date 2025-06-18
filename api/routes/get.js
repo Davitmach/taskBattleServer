@@ -225,6 +225,7 @@ export const User = async (req, res) => {
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
+  
 
   if (!req.params.id) {
     return res.status(400).json({ status: 'Invalid user ID' });
