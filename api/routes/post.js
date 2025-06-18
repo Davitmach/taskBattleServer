@@ -213,8 +213,9 @@ if (diffMs <= 0) {
 }
 
   const diffMinutes = Math.ceil(diffMs / (1000 * 60));
+  const parsedUserId = parseInitData(initData)?.user?.id;
 const getUser = await prisma.user.findFirst({
-  where:{initData:initData}
+  where:{initData:String(parsedUserId)}
 })
 
 const id = getUser.id;
