@@ -409,9 +409,10 @@ export const Top = async (req, res) => {
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
+  const parsedUserId = parseInitData(initData)?.user?.id;
 const  userId = await prisma.user.findFirst({
   where:{
-    initData
+    initData:String(parsedUserId)
   }
 })
     const users = await prisma.user.findMany({
