@@ -405,59 +405,72 @@ export const User = async (req, res) => {
 };
 
 export const Top = async (req, res) => {
- const initData = req.headers['tg-init-data'];
+  const initData = req.headers['tg-init-data'];
 
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
+
   const parsedUserId = parseInitData(initData)?.user?.id;
-const  userId = await prisma.user.findFirst({
-  where:{
-    initData:String(parsedUserId)
+  const userId = await prisma.user.findFirst({
+    where: {
+      initData: String(parsedUserId)
+    }
+  });
+
+  if (!userId) {
+    return res.status(404).json({ status: 'User not found' });
   }
-})
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        icon: true,
-        tasks: {
-          select: { id: true },
-        },
-        taskParticipations: {
-          select: {
-            taskId: true,
-          },
+
+  const users = await prisma.user.findMany({
+    select: {
+      id: true,
+      name: true,
+      icon: true,
+      tasks: {
+        select: { id: true },
+      },
+      taskParticipations: {
+        select: {
+          taskId: true,
         },
       },
-    });
+    },
+  });
 
-    const top = users
-      .map(user => {
-        const taskIds = new Set([
-          ...user.tasks.map(t => t.id),
-          ...user.taskParticipations.map(p => p.taskId),
-        ]);
+  // Подсчет общего количества задач для каждого пользователя
+  const top = users
+    .map(user => {
+      const taskIds = new Set([
+        ...user.tasks.map(t => t.id),
+        ...user.taskParticipations.map(p => p.taskId),
+      ]);
 
-        return {
-          id: user.id,
-          name: user.name,
-          icon: user.icon,
-          totalTasks: taskIds.size,
-        };
-      })
-      .sort((a, b) => b.totalTasks - a.totalTasks);
+      return {
+        id: user.id,
+        name: user.name,
+        icon: user.icon,
+        totalTasks: taskIds.size,
+      };
+    })
+    .sort((a, b) => b.totalTasks - a.totalTasks); // Сортировка по убыванию
 
-    const me = top.find(u => u.id === userId.id);
+  // Находим текущего пользователя в топе
+  const me = top.find(u => u.id === userId.id);
+
+  // Если пользователь найден, добавляем его позицию (rank)
+  if (me) {
+    // Находим индекс пользователя в отсортированном массиве (+1, так как индексы начинаются с 0)
+    me.rank = top.findIndex(u => u.id === userId.id) + 1;
+  }
 
   return res.status(200).json({
     status: 'success',
     data: {
       top,
-      me,
+      me, // Теперь содержит { id, name, icon, totalTasks, rank }
     },
   });
- 
 };
 export const FriendAdd = async (req, res) => {
   const id = req.params.id;
