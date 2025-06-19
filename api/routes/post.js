@@ -313,8 +313,6 @@ else {
 
 
 export const Welcome = async (req, res) => {
- 
-  
   const { name, icon, chatId } = req.body || {};
   if (!name || !icon || !chatId) {
     return res.status(404).json({ status: 'name, chatid and icon are required' });
@@ -324,9 +322,11 @@ export const Welcome = async (req, res) => {
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
-const parsedUserId = parseInitData(initData)?.user?.id;
+
+  const parsedUserId = parseInitData(initData)?.user?.id;
+
   const user = await prisma.user.findFirst({
-    where: { initData:String(parsedUserId) },
+    where: { initData: String(parsedUserId) },
     select: {
       id: true,
       name: true,
@@ -370,13 +370,11 @@ const parsedUserId = parseInitData(initData)?.user?.id;
       },
     },
   });
-  console.log(user);
-  
 
   if (!user) {
     await prisma.user.create({
       data: {
-        initData:String(parsedUserId),
+        initData: String(parsedUserId),
         name: String(name),
         icon: String(icon),
         chatId: String(chatId),
@@ -386,17 +384,13 @@ const parsedUserId = parseInitData(initData)?.user?.id;
   }
 
   const reports = await prisma.reports.findMany({
-    where: {
-      receiverId: user.id,
-    },
+    where: { receiverId: user.id },
   });
 
   if (reports.length > 10) {
     SendMessage(`Ваш аккаунт заблокирован`, user.chatId);
 
-    await prisma.rewards.deleteMany({
-      where: { userId: user.id },
-    });
+    await prisma.rewards.deleteMany({ where: { userId: user.id } });
 
     const userTasks = await prisma.task.findMany({
       where: { userId: user.id },
@@ -409,23 +403,18 @@ const parsedUserId = parseInitData(initData)?.user?.id;
       await prisma.taskParticipant.deleteMany({
         where: { taskId: { in: userTaskIds } },
       });
-
       await prisma.task.deleteMany({
         where: { id: { in: userTaskIds } },
       });
     }
 
-    await prisma.reports.deleteMany({
-      where: { receiverId: user.id },
-    });
-
+    await prisma.reports.deleteMany({ where: { receiverId: user.id } });
     await prisma.userFriend.deleteMany({
-      where: { OR: [{ userId: user.id }, { friendId: user.id }] },
+      where: {
+        OR: [{ userId: user.id }, { friendId: user.id }],
+      },
     });
-
-    await prisma.user.delete({
-      where: { id: user.id },
-    });
+    await prisma.user.delete({ where: { id: user.id } });
 
     return res.status(403).json({ status: 'blocked', message: 'Your account is blocked due to reports.' });
   }
@@ -472,45 +461,42 @@ const parsedUserId = parseInitData(initData)?.user?.id;
 
   function generateTaskComment(task, now = new Date()) {
     if (!task.endTime) return null;
-
     const end = new Date(task.endTime);
     const diffMinutes = Math.floor((end - now) / 60000);
 
-if (diffMinutes >= 15) {
-  return `<p id="white">${getRandomElement([
-    'Вау, с запасом справился! 💪',
-    'Мастер тайм-менеджмента!',
-    'Ты сделал это быстрее, чем я успел моргнуть 👀',
-    'Настоящий профи — всё заранее!',
-  ])}</p>`;
-} else if (diffMinutes >= 0) {
-  return `<p id="white">${getRandomElement([
-    'Успел вовремя, хорошая работа! 👍',
-    'Как по часам ⏰',
-    'Точно в срок — приятно видеть!',
-    'Ты как швейцарские часы!',
-  ])}</p>`;
-} else if (diffMinutes >= -10) {
-  return `<p id="yellow">${getRandomElement([
-    'Чуть-чуть не успел, но всё равно молодец!',
-    'На грани, но сойдёт 😅',
-    'Опоздание небольшое, бывает...',
-    'Следующий раз чуть быстрее — и будет идеально!',
-  ])}</p>`;
-} else {
-  return `<p id="red">${getRandomElement([
-    'Ты где пропадал? 😅',
-    'Опоздание уровня "школа жизни"',
-    'Эта задача уже покрылась пылью...',
-    'Нужно срочно качать дедлайн-мышцу! 🕰️',
-  ])}</p>`;
-}
-
+    if (diffMinutes >= 15) {
+      return `<p id="white">${getRandomElement([
+        'Вау, с запасом справился! 💪',
+        'Мастер тайм-менеджмента!',
+        'Ты сделал это быстрее, чем я успел моргнуть 👀',
+        'Настоящий профи — всё заранее!',
+      ])}</p>`;
+    } else if (diffMinutes >= 0) {
+      return `<p id="white">${getRandomElement([
+        'Успел вовремя, хорошая работа! 👍',
+        'Как по часам ⏰',
+        'Точно в срок — приятно видеть!',
+        'Ты как швейцарские часы!',
+      ])}</p>`;
+    } else if (diffMinutes >= -10) {
+      return `<p id="yellow">${getRandomElement([
+        'Чуть-чуть не успел, но всё равно молодец!',
+        'На грани, но сойдёт 😅',
+        'Опоздание небольшое, бывает...',
+        'Следующий раз чуть быстрее — и будет идеально!',
+      ])}</p>`;
+    } else {
+      return `<p id="red">${getRandomElement([
+        'Ты где пропадал? 😅',
+        'Опоздание уровня "школа жизни"',
+        'Эта задача уже покрылась пылью...',
+        'Нужно срочно качать дедлайн-мышцу! 🕰️',
+      ])}</p>`;
+    }
   }
 
   const tasks = Array.from(taskMap.values()).map(task => {
     const amOwner = task.userId === user.id;
-
     return {
       id: task.id,
       title: task.title,
@@ -534,7 +520,6 @@ if (diffMinutes >= 15) {
     };
   });
 
-  // Подсчёт задач по статусу
   const allTasks = [...ownTasks, ...participatedTasks];
   const taskCounter = {
     cancelled: 0,
@@ -548,6 +533,36 @@ if (diffMinutes >= 15) {
     if (task.status === 'COMPLETED') taskCounter.completed += 1;
   }
 
+  // === Добавляем процент обладателей наград ===
+
+  const totalUsers = await prisma.user.count();
+  const userRewards = user.rewards;
+
+  const rewardStats = await prisma.rewards.groupBy({
+    by: ['title'],
+    where: {
+      title: {
+        in: userRewards.map(r => r.title),
+      },
+    },
+    _count: {
+      title: true,
+    },
+  });
+
+  const rewardsWithPercentages = userRewards.map(reward => {
+    const found = rewardStats.find(r => r.title === reward.title);
+    const count = found?._count.title || 0;
+    const percentage = totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0;
+
+    return {
+      ...reward,
+      percentage,
+    };
+  });
+
+  // === Ответ ===
+
   return res.status(200).json({
     status: 'authorized',
     tasks,
@@ -559,7 +574,8 @@ if (diffMinutes >= 15) {
       chatId: user.chatId,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      rewards: user.rewards || [],
+      rewards: rewardsWithPercentages,
     },
   });
 };
+
