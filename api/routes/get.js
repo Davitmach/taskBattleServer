@@ -255,7 +255,13 @@ export const User = async (req, res) => {
       icon: true,
       createdAt: true,
       updatedAt: true,
-      rewards: true,
+      rewards: {
+  select: {
+    id: true,
+    title: true,
+    description: true
+  }
+},
       tasks: {
         select: {
           endTime: true,
@@ -348,6 +354,38 @@ export const User = async (req, res) => {
     status: false,
     side: null
   };
+// 1. Получаем общее количество пользователей
+const totalUsers = await prisma.user.count();
+
+// 2. Получаем награды текущего пользователя
+const userRewards = user.rewards;
+
+// 3. Для каждой награды считаем, у скольких пользователей она есть
+const rewardIds = userRewards.map(r => r.id);
+
+const rewardOccurrences = await prisma.rewards.groupBy({
+  by: ['title'],
+  where: {
+    title: {
+      in: userRewards.map(r => r.title)
+    }
+  },
+  _count: {
+    title: true
+  }
+});
+
+// 4. Добавляем процент к каждой награде
+const rewardsWithPercentage = userRewards.map(reward => {
+  const found = rewardOccurrences.find(r => r.title === reward.title);
+  const count = found?._count.title || 0;
+  const percentage = totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0;
+
+  return {
+    ...reward,
+    percentage
+  };
+});
 
   if (!friendRelation) {
     friendStatus = false;
@@ -394,14 +432,16 @@ export const User = async (req, res) => {
 
   // Финальный ответ
   return res.status(200).json({
-    status: 'success',
-    data: {
-      ...restUser,
-      taskCounter,
-      friend: friendStatus,
-      friends: friendsWithTaskCounts
-    }
-  });
+  status: 'success',
+  data: {
+    ...restUser,
+    taskCounter,
+    friend: friendStatus,
+    friends: friendsWithTaskCounts,
+    rewards: rewardsWithPercentage
+  }
+});
+
 };
 
 export const Top = async (req, res) => {
