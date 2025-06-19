@@ -255,13 +255,15 @@ export const User = async (req, res) => {
       icon: true,
       createdAt: true,
       updatedAt: true,
-      rewards: {
+     rewards: {
   select: {
     id: true,
     title: true,
-    description: true
+    description: true,
+    userId:true
   }
 },
+
       tasks: {
         select: {
           endTime: true,
@@ -333,27 +335,6 @@ export const User = async (req, res) => {
     if (task.status === 'IN_PROGRESS') taskCounter.in_progress += 1;
     if (task.status === 'COMPLETED') taskCounter.completed += 1;
   }
-
-  // Проверка, является ли targetUserId другом currentUser
-  const friendRelation = await prisma.userFriend.findFirst({
-    where: {
-      OR: [
-        { userId: currentUser.id, friendId: targetUserId },
-        { userId: targetUserId, friendId: currentUser.id }
-      ]
-    },
-    select: {
-      status: true,
-      userId: true,
-      friendId: true,
-      id: true
-    }
-  });
-
-  let friendStatus = {
-    status: false,
-    side: null
-  };
 // 1. Получаем общее количество пользователей
 const totalUsers = await prisma.user.count();
 
@@ -386,6 +367,27 @@ const rewardsWithPercentage = userRewards.map(reward => {
     percentage
   };
 });
+
+  // Проверка, является ли targetUserId другом currentUser
+  const friendRelation = await prisma.userFriend.findFirst({
+    where: {
+      OR: [
+        { userId: currentUser.id, friendId: targetUserId },
+        { userId: targetUserId, friendId: currentUser.id }
+      ]
+    },
+    select: {
+      status: true,
+      userId: true,
+      friendId: true,
+      id: true
+    }
+  });
+
+  let friendStatus = {
+    status: false,
+    side: null
+  };
 
   if (!friendRelation) {
     friendStatus = false;
@@ -431,7 +433,7 @@ const rewardsWithPercentage = userRewards.map(reward => {
   }));
 
   // Финальный ответ
-  return res.status(200).json({
+ return res.status(200).json({
   status: 'success',
   data: {
     ...restUser,
