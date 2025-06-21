@@ -2,7 +2,9 @@ import { PrismaClient } from "@prisma/client";
 import { localISOStringWithZ } from "../../utils/localtime.js";
 import { SendMessage } from "../../bot/handlers.js";
 import {parseInitData} from '../../utils/getuserid.js'
-import { zonedTimeToUtc } from 'date-fns-tz';
+import * as dateFnsTz from 'date-fns-tz';
+const zonedTimeToUtc = dateFnsTz.zonedTimeToUtc;
+
 const prisma = new PrismaClient();
 
 // export const Search = async (req,res)=> {
