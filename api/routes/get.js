@@ -597,12 +597,19 @@ if(check) {
       id:id
     }
   })
+
   const user = await prisma.user.findFirst({
 where:{
   id:checkFriend.userId
 }
   })
-  SendMessage('Ваш запрос на добавление в друзья был отменен', user.chatId);
+    if(checkFriend.status=='PENDING') {
+  SendMessage('Ваш запрос на добавление в друзья был отменен', user.chatId);   
+  }
+  else if(checkFriend.status=='ACCEPTED') {
+    SendMessage('Вы успешно удалили друга', user.chatId);   
+  }
+ 
       
 const del = await prisma.userFriend.delete({
   where: {
