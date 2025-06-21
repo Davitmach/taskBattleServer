@@ -21,7 +21,7 @@ export const SendMessage = async (message, chatId) => {
     console.error("Ошибка при отправке сообщения:", error);
   }
 };
-export const SendFriendRequest = async (receiverChatId, friendRequestId) => {
+export const SendFriendRequest = async (receiverChatId, friendRequestId,name) => {
   try {
     const user = await prisma.user.findFirst({
       where: { chatId: String(receiverChatId) },
@@ -36,7 +36,7 @@ export const SendFriendRequest = async (receiverChatId, friendRequestId) => {
       return;
     }
 
-    await bot.telegram.sendMessage(receiverChatId, "👤 Вас добавили в друзья. Принять запрос?", {
+    await bot.telegram.sendMessage(receiverChatId, `👤 ${name} добавил вас в друзья. Принять запрос?`, {
       reply_markup: {
         inline_keyboard: [
           [

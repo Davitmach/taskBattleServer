@@ -567,7 +567,8 @@ const chatId = user.chatId;
     }
   });
   const friendRequestId = add.id;
-  await SendFriendRequest(chatId, friendRequestId);
+  
+  await SendFriendRequest(chatId, friendRequestId,currentUser.name);
 
   return res.status(200).json({ status: 'success', data: add });
 };
