@@ -2,9 +2,6 @@ import { PrismaClient } from "@prisma/client";
 import { localISOStringWithZ } from "../../utils/localtime.js";
 import { SendMessage } from "../../bot/handlers.js";
 import {parseInitData} from '../../utils/getuserid.js'
-import * as dateFnsTz from 'date-fns-tz';
-const zonedTimeToUtc = dateFnsTz.zonedTimeToUtc;
-
 const prisma = new PrismaClient();
 
 // export const Search = async (req,res)=> {
@@ -183,7 +180,7 @@ else {
 
 }
 export const CreateTask = async (req,res)=> {
-  const { title, type, status, endTime,timeZone = 'UTC',friendId } = req.body || {};
+  const { title, type, status, endTime,friendId } = req.body || {};
     const initData = req.headers['tg-init-data'];
  if (!initData) {
         return res.status(404).json({ status: 'initData is required' });
@@ -288,12 +285,6 @@ await prisma.$transaction(async (tx) => {
 
   
 }
-
-
-
-
-
-
 export const GetUsers = async (req, res) => {
 const {adminPassword} = req.body || {};
 if(!adminPassword) {
@@ -587,5 +578,4 @@ export const Welcome = async (req, res) => {
     },
   });
 };
-
 
