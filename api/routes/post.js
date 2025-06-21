@@ -838,6 +838,7 @@ export const Welcome = async (req, res) => {
   });
 
   // === Ответ ===
+  
 
   return res.status(200).json({
     status: 'authorized',
