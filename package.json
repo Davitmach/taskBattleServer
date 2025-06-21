@@ -46,6 +46,7 @@
     "data-view-byte-length": "^1.0.2",
     "data-view-byte-offset": "^1.0.1",
     "date-fns": "^4.1.0",
+    "date-fns-tz": "^3.2.0",
     "debug": "^3.2.7",
     "define-data-property": "^1.1.4",
     "define-properties": "^1.2.1",
