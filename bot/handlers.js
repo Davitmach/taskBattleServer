@@ -36,7 +36,7 @@ export const SendFriendRequest = async (receiverChatId, friendRequestId,name) =>
       return;
     }
 
-    await bot.telegram.sendMessage(receiverChatId, `👤 ${name} добавил вас в друзья. Принять запрос?`, {
+    await bot.telegram.sendMessage(receiverChatId, `👤 ${name} qaqaqe добавил вас в друзья. Принять запрос?`, {
       reply_markup: {
         inline_keyboard: [
           [
