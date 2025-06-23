@@ -397,7 +397,7 @@ bot.command('stats', async (ctx) => {
 
     const leadersText = leaderboard.map((l, i) => {
       const user = users.find(u => u.id === l.userId);
-      const nameOrUsername = escapeMarkdown(user?.username || user?.name || 'Неизвестный');
+      const nameOrUsername = escapeMarkdownstat(user?.username || user?.name || 'Неизвестный');
       return `${i + 1}. @${nameOrUsername} — выполнено задач: ${l._count.taskId}`;
     }).join('\n') || 'Пока нет выполненных задач.';
 
