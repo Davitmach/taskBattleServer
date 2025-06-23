@@ -266,6 +266,11 @@ bot.on('callback_query', async (ctx) => {
     });
     if (!task) return ctx.answerCbQuery('Задача не найдена.');
 
+    // Запретить изменение, если статус задачи не IN_PROGRESS
+    if (task.status !== 'IN_PROGRESS') {
+      return ctx.answerCbQuery('❌ Невозможно изменить статус — задача уже завершена или отменена.', { show_alert: true });
+    }
+
     const user = await prisma.userBot.findFirst({ where: { tgId: fromId } });
     if (!user) return ctx.answerCbQuery('⛔ Вы не зарегистрированы.');
 
@@ -286,6 +291,7 @@ bot.on('callback_query', async (ctx) => {
     return ctx.answerCbQuery('Произошла ошибка.');
   }
 });
+
 
 // Команда просмотра своих задач
 bot.command('mytasks', async (ctx) => {
@@ -372,6 +378,7 @@ bot.command('mytasks', async (ctx) => {
 
 function escapeMarkdownV3(text) {
   if (!text) return '';
+  // Сначала экранируем обратный слеш, затем все спецсимволы Telegram MarkdownV2, включая точку
   return text
     .replace(/\\/g, '\\\\')
     .replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
@@ -398,23 +405,26 @@ bot.command('stats', async (ctx) => {
 
     const leadersText = leaderboard.map((l, i) => {
       const user = usersById.get(l.userId);
-      const displayName = user?.username || user?.name || 'Неизвестный';
+      const displayNameRaw = user?.username || user?.name || 'Неизвестный';
+      const displayName = displayNameRaw.trim();
       const escapedName = escapeMarkdownV3(displayName);
       if (user?.tgId) {
-        return `${i + 1}. [${escapedName}](tg://user?id=${user.tgId}) — выполнено задач: ${l._count.taskId}`;
+        // Экранируем точку после номера списка
+        return `${i + 1}\\. [${escapedName}](tg://user?id=${user.tgId}) — выполнено задач: ${l._count.taskId}`;
       } else {
-        return `${i + 1}. @${escapedName} — выполнено задач: ${l._count.taskId}`;
+        return `${i + 1}\\. @${escapedName} — выполнено задач: ${l._count.taskId}`;
       }
     }).join('\n') || 'Пока нет выполненных задач.';
 
     const slackersText = slackers.length > 0
       ? slackers.slice(0, 10).map((u, i) => {
-          const displayName = u.username || u.name || 'Неизвестный';
+          const displayNameRaw = u.username || u.name || 'Неизвестный';
+          const displayName = displayNameRaw.trim();
           const escapedName = escapeMarkdownV3(displayName);
           if (u.tgId) {
-            return `${i + 1}. [${escapedName}](tg://user?id=${u.tgId})`;
+            return `${i + 1}\\. [${escapedName}](tg://user?id=${u.tgId})`;
           } else {
-            return `${i + 1}. @${escapedName}`;
+            return `${i + 1}\\. @${escapedName}`;
           }
         }).join('\n')
       : 'Все пользователи выполнили хотя бы одну задачу!';
@@ -433,6 +443,7 @@ bot.command('stats', async (ctx) => {
     ctx.reply('❌ Произошла ошибка при получении статистики.');
   }
 });
+
 
 
 
