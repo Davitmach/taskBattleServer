@@ -256,7 +256,7 @@ bot.command('mytasks', async (ctx) => {
    
     
     
-    const task = prisma.user.findMany({})
+    const task = await prisma.user.findMany({})
     console.log(task,'qaqem vret');
     
     
