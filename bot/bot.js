@@ -410,7 +410,7 @@ bot.command('stats', async (ctx) => {
     const slackersText = slackers.length > 0
       ? slackers.slice(0, 10).map((u, i) => {
           const displayName = u.username || u.name || 'Неизвестный';
-          const escapedName = escapeMarkdownV2(displayName);
+          const escapedName = escapeMarkdownV3(displayName);
           if (u.tgId) {
             return `${i + 1}. [${escapedName}](tg://user?id=${u.tgId})`;
           } else {
