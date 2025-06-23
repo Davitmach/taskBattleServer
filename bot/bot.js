@@ -77,7 +77,10 @@ bot.command('addtask', async (ctx) => {
     try {
       creator = await prisma.userBot.upsert({
         where: { tgId: fromId },
-        update: {},
+        update: {
+          username: ctx.from.username || null,
+          name: ctx.from.first_name || null,
+        },
         create: {
           tgId: fromId,
           username: ctx.from.username || null,
@@ -97,13 +100,13 @@ bot.command('addtask', async (ctx) => {
             where: { username: u },
             update: {},
             create: {
-              tgId: '', // пока пусто, заполнится при активности
+              tgId: '', // пустой, заполнится при активности пользователя
               username: u,
               name: null,
             },
           });
         } catch (err) {
-          console.error(`Ошибка при создании/получении исполнителя ${u}:`, err);
+          console.error(`Ошибка при создании/получении исполнителя @${u}:`, err);
           throw new Error(`Ошибка с исполнителем @${u}`);
         }
       }));
@@ -129,9 +132,13 @@ bot.command('addtask', async (ctx) => {
       return ctx.reply('❌ Ошибка при создании задачи в базе.');
     }
 
-    try {
-      for (const exec of task.taskExecutors) {
-        if (!exec.user.tgId) continue;
+    // Отправка уведомлений с проверкой tgId
+    for (const exec of task.taskExecutors) {
+      if (!exec.user.tgId) {
+        console.log(`Пропускаем отправку @${exec.user.username} — нет tgId`);
+        continue;
+      }
+      try {
         await bot.telegram.sendMessage(
           exec.user.tgId,
           `📝 Новая задача:\n*${text}*\n⏳ До: ${deadline.toLocaleString()}`,
@@ -147,10 +154,9 @@ bot.command('addtask', async (ctx) => {
             },
           }
         );
+      } catch (err) {
+        console.error(`Ошибка при отправке сообщения @${exec.user.username}:`, err);
       }
-    } catch (err) {
-      console.error('Ошибка при отправке уведомлений исполнителям:', err);
-      // не останавливаем, просто предупреждаем
     }
 
     return ctx.reply('✅ Задача создана и отправлена исполнителям.');
@@ -160,6 +166,7 @@ bot.command('addtask', async (ctx) => {
     ctx.reply('❌ Произошла неожиданная ошибка при создании задачи.');
   }
 });
+
  
 
 

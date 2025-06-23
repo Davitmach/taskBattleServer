@@ -134,7 +134,7 @@ model TaskExecutor {
 
   task          TaskBot         @relation(fields: [taskId], references: [id])
   user          UserBot         @relation(fields: [userId], references: [id])
-
+  
   @@id([taskId, userId])
 }
 
