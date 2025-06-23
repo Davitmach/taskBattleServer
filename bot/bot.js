@@ -369,6 +369,7 @@ bot.command('mytasks', async (ctx) => {
     ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
   }
 });
+
 function escapeMarkdownstat(text) {
   if (!text) return '';
   return text
