@@ -265,7 +265,7 @@ console.log(user,'qaqaqaqswswsw');
   } catch (error) {
     console.error('Ошибка в mytasks:', error);
     // Показываем текст ошибки пользователю для отладки (можно убрать потом)
-    ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
+    ctx.reply(`❌ Ошибка:\n${error.message || error}`);
   }
 });
 
