@@ -369,56 +369,40 @@ bot.command('mytasks', async (ctx) => {
     ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
   }
 });
+function escapeMarkdownstat(text) {
+  if (!text) return '';
+  return text
+    .replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&'); // экранирует спецсимволы
+}
+
 bot.command('stats', async (ctx) => {
   try {
-    // Общее количество задач
     const totalTasks = await prisma.taskBot.count();
+    const completedTasks = await prisma.taskBot.count({ where: { status: 'COMPLETED' } });
+    const inProgressTasks = await prisma.taskBot.count({ where: { status: 'IN_PROGRESS' } });
 
-    // Количество выполненных задач
-    const completedTasks = await prisma.taskBot.count({
-      where: { status: 'COMPLETED' },
-    });
-
-    // Количество задач в прогрессе
-    const inProgressTasks = await prisma.taskBot.count({
-      where: { status: 'IN_PROGRESS' },
-    });
-
-    // Лидер по выполненным задачам (топ 5)
     const leaderboard = await prisma.taskExecutor.groupBy({
       by: ['userId'],
-      where: {
-        task: { status: 'COMPLETED' },
-      },
+      where: { task: { status: 'COMPLETED' } },
       _count: { taskId: true },
       orderBy: { _count: { taskId: 'desc' } },
       take: 5,
     });
 
-    // Все пользователи, у которых есть задачи (чтобы фильтровать раздолбаев)
     const allUsers = await prisma.userBot.findMany();
-
-    // Пользователи из лидеров
     const leaderUserIds = leaderboard.map(l => l.userId);
-
-    // "Раздолбаи" — те, кто есть в базе, но нет в лидерах
-    // То есть у кого нет выполненных задач
     const slackers = allUsers.filter(u => !leaderUserIds.includes(u.id));
-
-    // Получаем юзеров для лидеров (для вывода имен/юзернеймов)
     const users = allUsers;
 
-    // Формируем строку лидеров
     const leadersText = leaderboard.map((l, i) => {
       const user = users.find(u => u.id === l.userId);
-      const nameOrUsername = user?.username || user?.name || 'Неизвестный';
+      const nameOrUsername = escapeMarkdown(user?.username || user?.name || 'Неизвестный');
       return `${i + 1}. @${nameOrUsername} — выполнено задач: ${l._count.taskId}`;
     }).join('\n') || 'Пока нет выполненных задач.';
 
-    // Формируем строку раздолбаев (ограничим, например, 10 чел)
     const slackersText = slackers.length > 0
       ? slackers.slice(0, 10).map((u, i) => {
-          const nameOrUsername = u.username || u.name || 'Неизвестный';
+          const nameOrUsername = escapeMarkdown(u.username || u.name || 'Неизвестный');
           return `${i + 1}. @${nameOrUsername}`;
         }).join('\n')
       : 'Все пользователи выполнили хотя бы одну задачу!';
@@ -437,6 +421,7 @@ bot.command('stats', async (ctx) => {
     ctx.reply('❌ Произошла ошибка при получении статистики.');
   }
 });
+
 
 
 
