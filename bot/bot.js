@@ -215,7 +215,12 @@ bot.command('mytasks', async (ctx) => {
       },
     });
 
-    if (!user || user.taskExecutors.length === 0) {
+    if (!user) {
+      console.log(`Пользователь с tgId=${fromId} не найден в базе userBot.`);
+      return ctx.reply('🗂 У вас нет активных задач или вы не зарегистрированы.');
+    }
+
+    if (!user.taskExecutors || user.taskExecutors.length === 0) {
       return ctx.reply('🗂 У вас нет активных задач.');
     }
 
@@ -238,9 +243,11 @@ bot.command('mytasks', async (ctx) => {
     }
   } catch (error) {
     console.error('Ошибка в mytasks:', error);
-    ctx.reply('❌ Ошибка при получении задач.');
+    // Показываем текст ошибки пользователю для отладки (можно убрать потом)
+    ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
   }
 });
+
 
 
 
