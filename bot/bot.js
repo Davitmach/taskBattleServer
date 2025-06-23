@@ -218,6 +218,7 @@ bot.command('mytasks', async (ctx) => {
       },
     });
 console.log(user,'qaqaqaqswswsw');
+
     if (!user) {
       console.log(`Пользователь с tgId=${fromId} не найден в базе userBot.`);
       return ctx.reply('🗂 У вас нет активных задач или вы не зарегистрированы.');
