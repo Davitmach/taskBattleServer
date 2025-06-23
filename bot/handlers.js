@@ -3,7 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import fetch from 'node-fetch';
 import ms from "ms";
 const prisma = new PrismaClient();
-const allowedAdminId = 123456789;
+
 export const SendMessage = async (message, chatId) => {
   try {
     const user = await prisma.user.findFirst({
@@ -102,6 +102,8 @@ const friendId = friendRequestId.split('|')[0];
   }
 });
 
+const ADMIN_IDS = ['482233894', '1974611991']; // Твои админы (tgId как строки)
+
 function parseDurationToMinutes(str) {
   const regex = /^(\d+(\.\d+)?)([mhdw])$/;
   const match = str.match(regex);
@@ -120,8 +122,7 @@ function parseDurationToMinutes(str) {
   return Math.floor(value * (multipliers[unit] || 0));
 }
 
-const ADMIN_IDS = ['482233894', '1974611991']; // Замени на своих админов
-
+// Команда для добавления задачи
 bot.command('addtask', async (ctx) => {
   try {
     const fromId = String(ctx.from.id);
@@ -135,7 +136,6 @@ bot.command('addtask', async (ctx) => {
       return ctx.reply('⚠️ Формат: /addtask @user1 @user2 Текст задачи 1h');
     }
 
-    // Получаем юзнеймы исполнителей
     const usernames = args.filter(a => a.startsWith('@')).map(a => a.slice(1));
     const timeArg = args[args.length - 1];
     const text = args.slice(usernames.length, args.length - 1).join(' ');
@@ -159,40 +159,32 @@ bot.command('addtask', async (ctx) => {
     });
 
     // Получаем или создаём исполнителей
-    const executors = await Promise.all(
-      usernames.map(async (u) => {
-        return prisma.userBot.upsert({
-          where: { username: u },
-          update: {},
-          create: {
-            tgId: '', // пока пусто, добавится при активности
-            username: u,
-            name: null,
-          },
-        });
-      }),
-    );
+    const executors = await Promise.all(usernames.map(async (u) => {
+      return prisma.userBot.upsert({
+        where: { username: u },
+        update: {},
+        create: {
+          tgId: '', // пока пусто, заполнится при активности
+          username: u,
+          name: null,
+        },
+      });
+    }));
 
-    // Создаём задачу с связями через TaskExecutor
+    // Создаём задачу с исполнителями
     const task = await prisma.taskBot.create({
       data: {
         text,
         deadline,
         creatorId: creator.id,
         taskExecutors: {
-          create: executors.map((exec) => ({
-            userId: exec.id,
-          })),
+          create: executors.map(exec => ({ userId: exec.id })),
         },
       },
-      include: {
-        taskExecutors: {
-          include: { user: true },
-        },
-      },
+      include: { taskExecutors: { include: { user: true } } },
     });
 
-    // Отправляем уведомления исполнителям, у которых есть tgId
+    // Отправляем уведомления исполнителям с tgId
     for (const exec of task.taskExecutors) {
       if (!exec.user.tgId) continue;
       await bot.telegram.sendMessage(
@@ -208,13 +200,13 @@ bot.command('addtask', async (ctx) => {
               ],
             ],
           },
-        },
+        }
       );
     }
 
-    await ctx.reply('✅ Задача создана и отправлена исполнителям.');
-  } catch (error) {
-    console.error('Ошибка в addtask:', error);
+    return ctx.reply('✅ Задача создана и отправлена исполнителям.');
+  } catch (e) {
+    console.error('Ошибка в addtask:', e);
     ctx.reply('❌ Произошла ошибка при создании задачи.');
   }
 });
@@ -240,8 +232,7 @@ bot.on('callback_query', async (ctx) => {
     const user = await prisma.userBot.findFirst({ where: { tgId: fromId } });
     if (!user) return ctx.answerCbQuery('⛔ Вы не зарегистрированы.');
 
-    // Проверяем, что пользователь исполнитель
-    const isExecutor = task.taskExecutors.some((e) => e.userId === user.id);
+    const isExecutor = task.taskExecutors.some(e => e.userId === user.id);
     if (!isExecutor) return ctx.answerCbQuery('⛔ Вы не участник этой задачи.');
 
     const status = action === 'done' ? 'COMPLETED' : 'CANCELLED';
@@ -251,11 +242,7 @@ bot.on('callback_query', async (ctx) => {
       data: { status },
     });
 
-    await ctx.editMessageText(
-      `Статус задачи обновлён: ${
-        status === 'COMPLETED' ? '✅ Выполнена' : '❌ Отменена'
-      }`,
-    );
+    await ctx.editMessageText(`Статус задачи обновлён: ${status === 'COMPLETED' ? '✅ Выполнена' : '❌ Отменена'}`);
     return ctx.answerCbQuery('✅ Готово');
   } catch (error) {
     console.error('Ошибка в callback_query:', error);
@@ -263,7 +250,7 @@ bot.on('callback_query', async (ctx) => {
   }
 });
 
-// Команда для просмотра своих задач
+// Команда просмотра своих задач
 bot.command('mytasks', async (ctx) => {
   try {
     const fromId = String(ctx.from.id);
@@ -295,7 +282,7 @@ bot.command('mytasks', async (ctx) => {
               ],
             ],
           },
-        },
+        }
       );
     }
   } catch (error) {
@@ -304,6 +291,7 @@ bot.command('mytasks', async (ctx) => {
   }
 });
 
-bot.launch().then(() => {
-  console.log('🤖 Бот запущен');
-});
+
+// bot.launch().then(() => {
+//   console.log('🤖 Бот запущен');
+// });

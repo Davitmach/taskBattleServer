@@ -27,6 +27,12 @@ bot.catch((err, ctx) => {
   console.error('Ошибка в боте:', err);
 });
 
+
+
+
+
+
+
 // Запуск с polling
 bot.launch().then(() => {
   console.log('🤖 Bot запущен и ждёт команд!');
