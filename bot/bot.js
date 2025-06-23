@@ -295,6 +295,48 @@ bot.command('mytasks', async (ctx) => {
   }
 });
 
+bot.command('alltasks', async (ctx) => {
+  const fromId = String(ctx.from.id);
+  if (!ADMIN_IDS.includes(fromId)) {
+    return ctx.reply('⛔ Только админы могут просматривать все задачи.');
+  }
+
+  try {
+    const tasks = await prisma.taskBot.findMany({
+      where: { status: 'IN_PROGRESS' },
+      include: {
+        taskExecutors: {
+          include: {
+            user: true,
+          },
+        },
+        creator: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (tasks.length === 0) {
+      return ctx.reply('📂 Активных задач нет.');
+    }
+
+    for (const task of tasks) {
+      const executors = task.taskExecutors
+        .map(e => {
+          const name = e.user.name || e.user.username || e.user.tgId;
+          return `• ${name}`;
+        })
+        .join('\n');
+
+      await ctx.reply(
+        `📝 *${task.text}*\n👤 Создатель: ${task.creator.name || task.creator.username || task.creator.tgId}\n⏳ До: ${new Date(task.deadline).toLocaleString()}\n\n🧑‍💻 Исполнители:\n${executors}`,
+        { parse_mode: 'Markdown' }
+      );
+    }
+  } catch (err) {
+    console.error('Ошибка в alltasks:', err);
+    return ctx.reply('❌ Ошибка при получении задач.');
+  }
+});
 
 
 
