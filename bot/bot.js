@@ -216,10 +216,29 @@ bot.on('callback_query', async (ctx) => {
 bot.command('mytasks', async (ctx) => {
   try {
     const fromId = String(ctx.from.id);
-    
-    
-    const user = await prisma.userBot.findFirst({
-      where: { tgId: fromId},
+    const fromUsername = ctx.from.username || null;
+    const fromName = ctx.from.first_name || null;
+
+    // Проверяем, есть ли пользователь
+    let user = await prisma.userBot.findUnique({
+      where: { tgId: fromId }
+    });
+
+    // Если нет — регистрируем
+    if (!user) {
+      user = await prisma.userBot.create({
+        data: {
+          tgId: fromId,
+          username: fromUsername,
+          name: fromName,
+        },
+      });
+      console.log(`✅ Новый пользователь зарегистрирован: ${fromId}`);
+    }
+
+    // Получаем задачи после регистрации
+    const updatedUser = await prisma.userBot.findUnique({
+      where: { tgId: fromId },
       include: {
         taskExecutors: {
           where: { task: { status: 'IN_PROGRESS' } },
@@ -227,18 +246,13 @@ bot.command('mytasks', async (ctx) => {
         },
       },
     });
-console.log(user,'qaqaqaqswswsw');
 
-    if (!user) {
-      console.log(`Пользователь с tgId=${fromId} не найден в базе userBot.`);
-      return ctx.reply('🗂 У вас нет активных задач или вы не зарегистрированы.');
-    }
-
-    if (!user.taskExecutors || user.taskExecutors.length === 0) {
+    if (!updatedUser || updatedUser.taskExecutors.length === 0) {
       return ctx.reply('🗂 У вас нет активных задач.');
     }
 
-    for (const te of user.taskExecutors) {
+    // Показываем задачи
+    for (const te of updatedUser.taskExecutors) {
       const task = te.task;
       await ctx.reply(
         `📝 *${task.text}*\n⏳ До: ${new Date(task.deadline).toLocaleString()}`,
@@ -255,12 +269,13 @@ console.log(user,'qaqaqaqswswsw');
         }
       );
     }
+
   } catch (error) {
     console.error('Ошибка в mytasks:', error);
-    // Показываем текст ошибки пользователю для отладки (можно убрать потом)
     ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
   }
 });
+
 
 
 
