@@ -147,69 +147,94 @@ bot.command('addtask', async (ctx) => {
 
     const deadline = new Date(Date.now() + minutes * 60000);
 
-    // Получаем или создаём создателя
-    const creator = await prisma.userBot.upsert({
-      where: { tgId: fromId },
-      update: {},
-      create: {
-        tgId: fromId,
-        username: ctx.from.username || null,
-        name: ctx.from.first_name || null,
-      },
-    });
-
-    // Получаем или создаём исполнителей
-    const executors = await Promise.all(usernames.map(async (u) => {
-      return prisma.userBot.upsert({
-        where: { username: u },
+    let creator;
+    try {
+      creator = await prisma.userBot.upsert({
+        where: { tgId: fromId },
         update: {},
         create: {
-          tgId: '', // пока пусто, заполнится при активности
-          username: u,
-          name: null,
+          tgId: fromId,
+          username: ctx.from.username || null,
+          name: ctx.from.first_name || null,
         },
       });
-    }));
+    } catch (err) {
+      console.error('Ошибка при создании/получении создателя:', err);
+      return ctx.reply('❌ Ошибка при работе с создателем задачи.');
+    }
 
-    // Создаём задачу с исполнителями
-    const task = await prisma.taskBot.create({
-      data: {
-        text,
-        deadline,
-        creatorId: creator.id,
-        taskExecutors: {
-          create: executors.map(exec => ({ userId: exec.id })),
-        },
-      },
-      include: { taskExecutors: { include: { user: true } } },
-    });
-
-    // Отправляем уведомления исполнителям с tgId
-    for (const exec of task.taskExecutors) {
-      if (!exec.user.tgId) continue;
-      await bot.telegram.sendMessage(
-        exec.user.tgId,
-        `📝 Новая задача:\n*${text}*\n⏳ До: ${deadline.toLocaleString()}`,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: '✅ Выполнить', callback_data: `done_${task.id}` },
-                { text: '❌ Отменить', callback_data: `cancel_${task.id}` },
-              ],
-            ],
-          },
+    let executors;
+    try {
+      executors = await Promise.all(usernames.map(async (u) => {
+        try {
+          return await prisma.userBot.upsert({
+            where: { username: u },
+            update: {},
+            create: {
+              tgId: '', // пока пусто, заполнится при активности
+              username: u,
+              name: null,
+            },
+          });
+        } catch (err) {
+          console.error(`Ошибка при создании/получении исполнителя ${u}:`, err);
+          throw new Error(`Ошибка с исполнителем @${u}`);
         }
-      );
+      }));
+    } catch (err) {
+      return ctx.reply(`❌ ${err.message}`);
+    }
+
+    let task;
+    try {
+      task = await prisma.taskBot.create({
+        data: {
+          text,
+          deadline,
+          creatorId: creator.id,
+          taskExecutors: {
+            create: executors.map(exec => ({ userId: exec.id })),
+          },
+        },
+        include: { taskExecutors: { include: { user: true } } },
+      });
+    } catch (err) {
+      console.error('Ошибка при создании задачи:', err);
+      return ctx.reply('❌ Ошибка при создании задачи в базе.');
+    }
+
+    try {
+      for (const exec of task.taskExecutors) {
+        if (!exec.user.tgId) continue;
+        await bot.telegram.sendMessage(
+          exec.user.tgId,
+          `📝 Новая задача:\n*${text}*\n⏳ До: ${deadline.toLocaleString()}`,
+          {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: '✅ Выполнить', callback_data: `done_${task.id}` },
+                  { text: '❌ Отменить', callback_data: `cancel_${task.id}` },
+                ],
+              ],
+            },
+          }
+        );
+      }
+    } catch (err) {
+      console.error('Ошибка при отправке уведомлений исполнителям:', err);
+      // не останавливаем, просто предупреждаем
     }
 
     return ctx.reply('✅ Задача создана и отправлена исполнителям.');
+
   } catch (e) {
-    console.error('Ошибка в addtask:', e);
-    ctx.reply('❌ Произошла ошибка при создании задачи.');
+    console.error('Неожиданная ошибка в команде addtask:', e);
+    ctx.reply('❌ Произошла неожиданная ошибка при создании задачи.');
   }
 });
+
 
 // Обработка кнопок Выполнить и Отменить
 bot.on('callback_query', async (ctx) => {
@@ -292,6 +317,3 @@ bot.command('mytasks', async (ctx) => {
 });
 
 
-// bot.launch().then(() => {
-//   console.log('🤖 Бот запущен');
-// });
