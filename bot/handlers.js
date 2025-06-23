@@ -101,3 +101,8 @@ const friendId = friendRequestId.split('|')[0];
     await ctx.answerCbQuery("Неизвестная команда.");
   }
 });
+
+
+bot.command('addtask', async (ctx) => {
+  ctx.reply('иди нахуй');
+});
