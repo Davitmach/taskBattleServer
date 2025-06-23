@@ -48,8 +48,28 @@ function parseDurationToMinutes(str) {
   return Math.floor(value * (multipliers[unit] || 0));
 }
 function escapeMarkdown(text) {
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+  return text
+    .replace(/_/g, '\\_')
+    .replace(/\*/g, '\\*')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/~/g, '\\~')
+    .replace(/`/g, '\\`')
+    .replace(/>/g, '\\>')
+    .replace(/#/g, '\\#')
+    .replace(/\+/g, '\\+')
+    .replace(/-/g, '\\-')
+    .replace(/=/g, '\\=')
+    .replace(/\|/g, '\\|')
+    .replace(/\{/g, '\\{')
+    .replace(/\}/g, '\\}')
+    .replace(/\./g, '\\.')  // обязательно экранировать точку
+    .replace(/!/g, '\\!')
+    .replace(/\\/g, '\\\\'); // сначала нужно экранировать обратный слэш
 }
+
 function formatTimeLeft(ms) {
   if (ms <= 0) return '⏰ Время истекло';
 
@@ -443,14 +463,15 @@ bot.command('alltasks', async (ctx) => {
       const timeLeftFormatted = formatTimeLeft(timeLeftMs);
 
       const executors = task.taskExecutors
-        .map(e => {
-          const name = escapeMarkdown(e.user.name || e.user.username || e.user.tgId || 'Без имени');
-          return `• ${name}`;
-        })
-        .join('\n');
+  .map(e => {
+    const name = escapeMarkdown(e.user.name || e.user.username || e.user.tgId || 'Без имени');
+    return `• ${name}`;
+  })
+  .join('\n');
 
-      const creatorName = escapeMarkdown(task.creator.name || task.creator.username || task.creator.tgId || 'Без имени');
-      const taskText = escapeMarkdown(task.text);
+const creatorName = escapeMarkdown(task.creator.name || task.creator.username || task.creator.tgId || 'Без имени');
+const taskText = escapeMarkdown(task.text);
+
 
       await ctx.reply(
         `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ Осталось: ${timeLeftFormatted}\n\n🧑‍💻 Исполнители:\n${executors}`,
