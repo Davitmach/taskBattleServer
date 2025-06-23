@@ -206,10 +206,10 @@ bot.on('callback_query', async (ctx) => {
 bot.command('mytasks', async (ctx) => {
   try {
     const fromId = String(ctx.from.id);
-    console.log(fromId,'qaqaqaqqaqaq');
+    
     
     const user = await prisma.userBot.findFirst({
-      where: { tgId: fromId },
+      where: { tgId: 1974611991 },
       include: {
         taskExecutors: {
           where: { task: { status: 'IN_PROGRESS' } },
@@ -217,7 +217,7 @@ bot.command('mytasks', async (ctx) => {
         },
       },
     });
-
+console.log(user,'qaqaqaqswswsw');
     if (!user) {
       console.log(`Пользователь с tgId=${fromId} не найден в базе userBot.`);
       return ctx.reply('🗂 У вас нет активных задач или вы не зарегистрированы.');
