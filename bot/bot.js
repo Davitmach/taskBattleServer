@@ -473,6 +473,14 @@ function formatTimeLeft2(ms) {
 }
 
 
+
+function escapeMarkdownalltask(text) {
+  if (!text) return '';
+  return text
+    .replace(/\\/g, '\\\\')     // Экранируем обратный слэш первым
+    .replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1'); // Экранируем спецсимволы, включая точку
+}
+
 bot.command('alltasks', async (ctx) => {
   const fromId = String(ctx.from.id);
   if (!ADMIN_IDS.includes(fromId)) {
@@ -502,13 +510,13 @@ bot.command('alltasks', async (ctx) => {
 
       const executors = task.taskExecutors
         .map(e => {
-          const name = escapeMarkdownV2(e.user.name || e.user.username || e.user.tgId || 'Без имени');
+          const name = escapeMarkdownalltask(e.user.name || e.user.username || String(e.user.tgId) || 'Без имени');
           return `• ${name}`;
         })
         .join('\n');
 
-      const creatorName = escapeMarkdownV2(task.creator.name || task.creator.username || task.creator.tgId || 'Без имени');
-      const taskText = escapeMarkdownV2(task.text);
+      const creatorName = escapeMarkdownalltask(task.creator.name || task.creator.username || String(task.creator.tgId) || 'Без имени');
+      const taskText = escapeMarkdownalltask(task.text);
 
       await ctx.reply(
         `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ Осталось: ${timeLeftFormatted}\n\n🧑‍💻 Исполнители:\n${executors}`,
