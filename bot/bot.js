@@ -295,6 +295,10 @@ bot.command('mytasks', async (ctx) => {
   }
 });
 
+function escapeMarkdown(text) {
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+}
+
 bot.command('alltasks', async (ctx) => {
   const fromId = String(ctx.from.id);
   if (!ADMIN_IDS.includes(fromId)) {
@@ -306,9 +310,7 @@ bot.command('alltasks', async (ctx) => {
       where: { status: 'IN_PROGRESS' },
       include: {
         taskExecutors: {
-          include: {
-            user: true,
-          },
+          include: { user: true },
         },
         creator: true,
       },
@@ -322,14 +324,18 @@ bot.command('alltasks', async (ctx) => {
     for (const task of tasks) {
       const executors = task.taskExecutors
         .map(e => {
-          const name = e.user.name || e.user.username || e.user.tgId;
+          const name = escapeMarkdown(e.user.name || e.user.username || e.user.tgId);
           return `• ${name}`;
         })
         .join('\n');
 
+      const creatorName = escapeMarkdown(task.creator.name || task.creator.username || task.creator.tgId);
+      const taskText = escapeMarkdown(task.text);
+      const deadline = new Date(task.deadline).toLocaleString();
+
       await ctx.reply(
-        `📝 *${task.text}*\n👤 Создатель: ${task.creator.name || task.creator.username || task.creator.tgId}\n⏳ До: ${new Date(task.deadline).toLocaleString()}\n\n🧑‍💻 Исполнители:\n${executors}`,
-        { parse_mode: 'Markdown' }
+        `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ До: ${deadline}\n\n🧑‍💻 Исполнители:\n${executors}`,
+        { parse_mode: 'MarkdownV2' }
       );
     }
   } catch (err) {
@@ -337,6 +343,7 @@ bot.command('alltasks', async (ctx) => {
     return ctx.reply('❌ Ошибка при получении задач.');
   }
 });
+
 
 
 
