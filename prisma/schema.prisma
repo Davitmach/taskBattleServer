@@ -106,7 +106,8 @@ model Reports {
 
 model UserBot {
   id           String          @id @default(cuid())
-  tgId         String          @unique
+  tgId String? @unique  // сделать nullable
+
   username     String?         @unique
   name         String?
   createdAt    DateTime        @default(now())

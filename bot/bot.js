@@ -94,22 +94,25 @@ bot.command('addtask', async (ctx) => {
 
     let executors;
     try {
-      executors = await Promise.all(usernames.map(async (u) => {
-        try {
-          return await prisma.userBot.upsert({
-            where: { username: u },
-            update: {},
-            create: {
-              tgId: '', // пустой, заполнится при активности пользователя
-              username: u,
-              name: null,
-            },
-          });
-        } catch (err) {
-          console.error(`Ошибка при создании/получении исполнителя @${u}:`, err);
-          throw new Error(`Ошибка с исполнителем @${u}`);
-        }
-      }));
+   executors = await Promise.all(usernames.map(async (u) => {
+  try {
+    let user = await prisma.userBot.findUnique({ where: { username: u } });
+    if (!user) {
+      user = await prisma.userBot.create({
+        data: {
+          username: u,
+          tgId: null,  // null вместо пустой строки
+          name: null,
+        },
+      });
+    }
+    return user;
+  } catch (err) {
+    console.error(`Ошибка при создании/получении исполнителя @${u}:`, err);
+    throw new Error(`Ошибка с исполнителем @${u}`);
+  }
+}));
+
     } catch (err) {
       return ctx.reply(`❌ ${err.message}`);
     }
