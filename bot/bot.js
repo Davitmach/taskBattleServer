@@ -50,6 +50,24 @@ function parseDurationToMinutes(str) {
 function escapeMarkdown(text) {
   return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
 }
+function formatTimeLeft(ms) {
+  if (ms <= 0) return '⏰ Время истекло';
+
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  let parts = [];
+  if (days > 0) parts.push(`${days} дн.`);
+  if (hours > 0) parts.push(`${hours} ч.`);
+  if (minutes > 0) parts.push(`${minutes} мин.`);
+  if (parts.length === 0) parts.push('< 1 мин.');
+
+  return parts.join(' ');
+}
+
+
 // Команда для добавления задачи
 bot.command('addtask', async (ctx) => {
   try {
@@ -397,7 +415,6 @@ bot.command('stats', async (ctx) => {
 
 
 
-
 bot.command('alltasks', async (ctx) => {
   const fromId = String(ctx.from.id);
   if (!ADMIN_IDS.includes(fromId)) {
@@ -421,19 +438,22 @@ bot.command('alltasks', async (ctx) => {
     }
 
     for (const task of tasks) {
+      const now = Date.now();
+      const timeLeftMs = new Date(task.deadline).getTime() - now;
+      const timeLeftFormatted = formatTimeLeft(timeLeftMs);
+
       const executors = task.taskExecutors
         .map(e => {
-          const name = escapeMarkdown(e.user.name || e.user.username || e.user.tgId);
+          const name = escapeMarkdown(e.user.name || e.user.username || e.user.tgId || 'Без имени');
           return `• ${name}`;
         })
         .join('\n');
 
-      const creatorName = escapeMarkdown(task.creator.name || task.creator.username || task.creator.tgId);
+      const creatorName = escapeMarkdown(task.creator.name || task.creator.username || task.creator.tgId || 'Без имени');
       const taskText = escapeMarkdown(task.text);
-      const deadline = new Date(task.deadline).toLocaleString();
 
       await ctx.reply(
-        `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ До: ${deadline}\n\n🧑‍💻 Исполнители:\n${executors}`,
+        `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ Осталось: ${timeLeftFormatted}\n\n🧑‍💻 Исполнители:\n${executors}`,
         { parse_mode: 'MarkdownV2' }
       );
     }
