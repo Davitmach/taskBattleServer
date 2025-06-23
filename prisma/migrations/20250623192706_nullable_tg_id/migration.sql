@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "UserBot" ALTER COLUMN "tgId" DROP NOT NULL;
