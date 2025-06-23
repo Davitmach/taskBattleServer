@@ -105,26 +105,37 @@ model Reports {
 
 
 model UserBot {
-  id           String     @id @default(cuid())
-  tgId         String     @unique
-  username     String     @unique
-  createdAt    DateTime   @default(now())
+  id           String          @id @default(cuid())
+  tgId         String          @unique
+  username     String?         @unique
+  name         String?
+  createdAt    DateTime        @default(now())
 
-  createdTasks TaskBot[]  @relation("CreatorTasks") // задачи, которые создал этот пользователь
-  tasks        TaskBot[]  @relation("UserTasks")    // задачи, где он исполнитель
+  createdTasks TaskBot[]       @relation("CreatorTasks")
+  taskExecutors TaskExecutor[]
 }
 
 model TaskBot {
-  id         String         @id @default(cuid())
-  text       String
-  deadline   DateTime
-  createdAt  DateTime       @default(now())
-  status     TaskStatusBot  @default(IN_PROGRESS)
+  id            String          @id @default(cuid())
+  text          String
+  deadline      DateTime
+  createdAt     DateTime        @default(now())
+  status        TaskStatusBot   @default(IN_PROGRESS)
 
-  creatorId  String
-  creator    UserBot        @relation("CreatorTasks", fields: [creatorId], references: [id])
+  creatorId     String
+  creator       UserBot         @relation("CreatorTasks", fields: [creatorId], references: [id])
 
-  executors  UserBot[]      @relation("UserTasks") // исполнители задачи (многие ко многим)
+  taskExecutors TaskExecutor[]
+}
+
+model TaskExecutor {
+  taskId        String
+  userId        String
+
+  task          TaskBot         @relation(fields: [taskId], references: [id])
+  user          UserBot         @relation(fields: [userId], references: [id])
+
+  @@id([taskId, userId])
 }
 
 enum TaskStatusBot {
