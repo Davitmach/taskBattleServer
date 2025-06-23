@@ -1,6 +1,6 @@
 import { Telegraf, Markup } from 'telegraf';
 import dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient } from "@prisma/client";
 
 dotenv.config();
 
@@ -256,11 +256,9 @@ bot.command('mytasks', async (ctx) => {
    
     
     
-    const user = await prisma.userBot.findFirst({
-     
-      
-    });
-console.log(user,'qaqaqaqswswsw');
+    const task = prisma.user.findMany({})
+    console.log(task,'qaqem vret');
+    
     
   } catch (error) {
     console.error('Ошибка в mytasks:', error);
