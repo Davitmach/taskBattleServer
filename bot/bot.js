@@ -372,39 +372,72 @@ bot.command('mytasks', async (ctx) => {
 
 function escapeMarkdownstat(text) {
   if (!text) return '';
-  return text
-    .replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&'); // экранирует спецсимволы
+  return text.replace(/([_*[\]()~`>#+\-=|{}.!\\])/g, '\\$1');
 }
 
 bot.command('stats', async (ctx) => {
   try {
+    // Общее количество задач
     const totalTasks = await prisma.taskBot.count();
-    const completedTasks = await prisma.taskBot.count({ where: { status: 'COMPLETED' } });
-    const inProgressTasks = await prisma.taskBot.count({ where: { status: 'IN_PROGRESS' } });
 
+    // Количество выполненных задач
+    const completedTasks = await prisma.taskBot.count({
+      where: { status: 'COMPLETED' },
+    });
+
+    // Количество задач в прогрессе
+    const inProgressTasks = await prisma.taskBot.count({
+      where: { status: 'IN_PROGRESS' },
+    });
+
+    // Лидер по выполненным задачам (топ 5)
     const leaderboard = await prisma.taskExecutor.groupBy({
       by: ['userId'],
-      where: { task: { status: 'COMPLETED' } },
+      where: {
+        task: { status: 'COMPLETED' },
+      },
       _count: { taskId: true },
       orderBy: { _count: { taskId: 'desc' } },
       take: 5,
     });
 
+    // Все пользователи, у которых есть задачи (чтобы фильтровать раздолбаев)
     const allUsers = await prisma.userBot.findMany();
-    const leaderUserIds = leaderboard.map(l => l.userId);
-    const slackers = allUsers.filter(u => !leaderUserIds.includes(u.id));
-    const users = allUsers;
 
+    // Пользователи из лидеров
+    const leaderUserIds = leaderboard.map(l => l.userId);
+
+    // "Раздолбаи" — те, кто есть в базе, но нет в лидерах
+    // То есть у кого нет выполненных задач
+    const slackers = allUsers.filter(u => !leaderUserIds.includes(u.id));
+
+    // Для удобства — словарь пользователей по id
+    const usersById = new Map(allUsers.map(u => [u.id, u]));
+
+    // Формируем строку лидеров с кликабельными упоминаниями
     const leadersText = leaderboard.map((l, i) => {
-      const user = users.find(u => u.id === l.userId);
-      const nameOrUsername = escapeMarkdownstat(user?.username || user?.name || 'Неизвестный');
-      return `${i + 1}. @${nameOrUsername} — выполнено задач: ${l._count.taskId}`;
+      const user = usersById.get(l.userId);
+      const displayName = user?.username || user?.name || 'Неизвестный';
+      const escapedName = escapeMarkdownstat(displayName);
+      if (user?.tgId) {
+        // Кликабельная ссылка на пользователя
+        return `${i + 1}. [${escapedName}](tg://user?id=${user.tgId}) — выполнено задач: ${l._count.taskId}`;
+      } else {
+        // Если нет tgId, просто текст с @ и экранированными символами
+        return `${i + 1}. @${escapedName} — выполнено задач: ${l._count.taskId}`;
+      }
     }).join('\n') || 'Пока нет выполненных задач.';
 
+    // Формируем строку раздолбаев с кликабельными упоминаниями, максимум 10
     const slackersText = slackers.length > 0
       ? slackers.slice(0, 10).map((u, i) => {
-          const nameOrUsername = escapeMarkdown(u.username || u.name || 'Неизвестный');
-          return `${i + 1}. @${nameOrUsername}`;
+          const displayName = u.username || u.name || 'Неизвестный';
+          const escapedName = escapeMarkdown(displayName);
+          if (u.tgId) {
+            return `${i + 1}. [${escapedName}](tg://user?id=${u.tgId})`;
+          } else {
+            return `${i + 1}. @${escapedName}`;
+          }
         }).join('\n')
       : 'Все пользователи выполнили хотя бы одну задачу!';
 
@@ -416,12 +449,13 @@ bot.command('stats', async (ctx) => {
       `🏆 *Топ исполнителей по выполненным задачам:*\n${leadersText}\n\n` +
       `⚠️ *Пользователи без выполненных задач:*\n${slackersText}`;
 
-    await ctx.reply(msg, { parse_mode: 'Markdown' });
+    await ctx.reply(msg, { parse_mode: 'MarkdownV2' });
   } catch (error) {
     console.error('Ошибка в команде stats:', error);
     ctx.reply('❌ Произошла ошибка при получении статистики.');
   }
 });
+
 
 
 
