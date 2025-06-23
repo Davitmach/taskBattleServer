@@ -191,7 +191,7 @@ bot.command('addtask', async (ctx) => {
     const summary =
       `✅ *Задача создана*\n` +
       `📝 *${escapeMarkdown(text)}*\n` +
-      `⏳ До: ${deadline.toLocaleString()} (${formatTimeLeft(deadline)} осталось)\n\n` +
+      `⏳ (${formatTimeLeft(deadline)} осталось)\n\n` +
       `👥 *Исполнители:*\n` +
       results.join('\n');
 
