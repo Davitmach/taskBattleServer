@@ -254,7 +254,9 @@ bot.on('callback_query', async (ctx) => {
 bot.command('mytasks', async (ctx) => {
   try {
    
-    
+    console.log('🔍 Prisma тип:', typeof prisma.userBot);
+    console.log('🔍 Все ключи:', Object.keys(prisma));
+
     
     const task = await prisma.userBot.findMany({})
     console.log(task,'qaqem vret');
