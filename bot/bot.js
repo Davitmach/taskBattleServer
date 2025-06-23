@@ -209,7 +209,7 @@ bot.command('mytasks', async (ctx) => {
     
     
     const user = await prisma.userBot.findFirst({
-      where: { tgId: 1974611991 },
+      where: { tgId: String(1974611991) },
       include: {
         taskExecutors: {
           where: { task: { status: 'IN_PROGRESS' } },
