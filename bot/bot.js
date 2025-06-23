@@ -440,6 +440,12 @@ bot.command('stats', async (ctx) => {
 
 
 
+function escapeMarkdownV2(text) {
+  // Список спецсимволов MarkdownV2 по документации Telegram
+  // Нужно экранировать: _ * [ ] ( ) ~ ` > # + - = | { } . !
+  // Точка (.) тоже входит, нужно экранировать!
+  return text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+}
 
 
 bot.command('alltasks', async (ctx) => {
@@ -470,15 +476,14 @@ bot.command('alltasks', async (ctx) => {
       const timeLeftFormatted = formatTimeLeft(timeLeftMs);
 
       const executors = task.taskExecutors
-  .map(e => {
-    const name = escapeMarkdown(e.user.name || e.user.username || e.user.tgId || 'Без имени');
-    return `• ${name}`;
-  })
-  .join('\n');
+        .map(e => {
+          const name = escapeMarkdownV2(e.user.name || e.user.username || e.user.tgId || 'Без имени');
+          return `• ${name}`;
+        })
+        .join('\n');
 
-const creatorName = escapeMarkdown(task.creator.name || task.creator.username || task.creator.tgId || 'Без имени');
-const taskText = escapeMarkdown(task.text);
-
+      const creatorName = escapeMarkdownV2(task.creator.name || task.creator.username || task.creator.tgId || 'Без имени');
+      const taskText = escapeMarkdownV2(task.text);
 
       await ctx.reply(
         `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ Осталось: ${timeLeftFormatted}\n\n🧑‍💻 Исполнители:\n${executors}`,
@@ -490,6 +495,7 @@ const taskText = escapeMarkdown(task.text);
     return ctx.reply('❌ Ошибка при получении задач.');
   }
 });
+
 
 
 
