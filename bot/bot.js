@@ -219,25 +219,7 @@ bot.command('mytasks', async (ctx) => {
     const fromUsername = ctx.from.username || null;
     const fromName = ctx.from.first_name || null;
 
-    // Проверяем, есть ли пользователь
     let user = await prisma.userBot.findUnique({
-      where: { tgId: fromId }
-    });
-
-    // Если нет — регистрируем
-    if (!user) {
-      user = await prisma.userBot.create({
-        data: {
-          tgId: fromId,
-          username: fromUsername,
-          name: fromName,
-        },
-      });
-      console.log(`✅ Новый пользователь зарегистрирован: ${fromId}`);
-    }
-
-    // Получаем задачи после регистрации
-    const updatedUser = await prisma.userBot.findUnique({
       where: { tgId: fromId },
       include: {
         taskExecutors: {
@@ -247,12 +229,50 @@ bot.command('mytasks', async (ctx) => {
       },
     });
 
-    if (!updatedUser || updatedUser.taskExecutors.length === 0) {
+    // Если не нашли по tgId — ищем по username
+    if (!user && fromUsername) {
+      const existingByUsername = await prisma.userBot.findUnique({
+        where: { username: fromUsername },
+      });
+
+      if (existingByUsername) {
+        // Обновляем tgId
+        user = await prisma.userBot.update({
+          where: { username: fromUsername },
+          data: { tgId: fromId },
+          include: {
+            taskExecutors: {
+              where: { task: { status: 'IN_PROGRESS' } },
+              include: { task: true },
+            },
+          },
+        });
+      }
+    }
+
+    // Если всё равно не найден — создаём нового
+    if (!user) {
+      user = await prisma.userBot.create({
+        data: {
+          tgId: fromId,
+          username: fromUsername,
+          name: fromName,
+        },
+        include: {
+          taskExecutors: {
+            where: { task: { status: 'IN_PROGRESS' } },
+            include: { task: true },
+          },
+        },
+      });
+      console.log(`✅ Зарегистрирован новый пользователь с tgId=${fromId}`);
+    }
+
+    if (!user.taskExecutors || user.taskExecutors.length === 0) {
       return ctx.reply('🗂 У вас нет активных задач.');
     }
 
-    // Показываем задачи
-    for (const te of updatedUser.taskExecutors) {
+    for (const te of user.taskExecutors) {
       const task = te.task;
       await ctx.reply(
         `📝 *${task.text}*\n⏳ До: ${new Date(task.deadline).toLocaleString()}`,
@@ -269,7 +289,6 @@ bot.command('mytasks', async (ctx) => {
         }
       );
     }
-
   } catch (error) {
     console.error('Ошибка в mytasks:', error);
     ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
