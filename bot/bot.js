@@ -73,6 +73,7 @@ bot.command('addtask', async (ctx) => {
 
     const deadline = new Date(Date.now() + minutes * 60000);
 
+    // Создатель
     let creator;
     try {
       creator = await prisma.userBot.upsert({
@@ -92,31 +93,32 @@ bot.command('addtask', async (ctx) => {
       return ctx.reply('❌ Ошибка при работе с создателем задачи.');
     }
 
+    // Исполнители
     let executors;
     try {
-   executors = await Promise.all(usernames.map(async (u) => {
-  try {
-    let user = await prisma.userBot.findUnique({ where: { username: u } });
-    if (!user) {
-      user = await prisma.userBot.create({
-        data: {
-          username: u,
-          tgId: null,  // null вместо пустой строки
-          name: null,
-        },
-      });
-    }
-    return user;
-  } catch (err) {
-    console.error(`Ошибка при создании/получении исполнителя @${u}:`, err);
-    throw new Error(`Ошибка с исполнителем @${u}`);
-  }
-}));
-
+      executors = await Promise.all(usernames.map(async (u) => {
+        try {
+          let user = await prisma.userBot.findUnique({ where: { username: u } });
+          if (!user) {
+            user = await prisma.userBot.create({
+              data: {
+                username: u,
+                tgId: null,
+                name: null,
+              },
+            });
+          }
+          return user;
+        } catch (err) {
+          console.error(`Ошибка при создании/получении исполнителя @${u}:`, err);
+          throw new Error(`Ошибка с исполнителем @${u}`);
+        }
+      }));
     } catch (err) {
       return ctx.reply(`❌ ${err.message}`);
     }
 
+    // Задача
     let task;
     try {
       task = await prisma.taskBot.create({
@@ -135,16 +137,19 @@ bot.command('addtask', async (ctx) => {
       return ctx.reply('❌ Ошибка при создании задачи в базе.');
     }
 
-    // Отправка уведомлений с проверкой tgId
+    // Отправка уведомлений
+    const results = [];
+
     for (const exec of task.taskExecutors) {
-      if (!exec.user.tgId) {
-        console.log(`Пропускаем отправку @${exec.user.username} — нет tgId`);
+      const u = exec.user;
+      if (!u.tgId) {
+        results.push(`• ${u.username} — 🔴 не отправлено (нет tgId)`);
         continue;
       }
       try {
         await bot.telegram.sendMessage(
-          exec.user.tgId,
-          `📝 Новая задача:\n*${text}*\n⏳ До: ${deadline.toLocaleString()}`,
+          u.tgId,
+          `📝 Новая задача:\n*${escapeMarkdown(text)}*\n⏳ До: ${deadline.toLocaleString()}`,
           {
             parse_mode: 'Markdown',
             reply_markup: {
@@ -157,18 +162,50 @@ bot.command('addtask', async (ctx) => {
             },
           }
         );
+        results.push(`• ${u.username} — 🟢 отправлено`);
       } catch (err) {
-        console.error(`Ошибка при отправке сообщения @${exec.user.username}:`, err);
+        console.error(`Ошибка при отправке @${u.username}:`, err);
+        results.push(`• ${u.username} — 🔴 ошибка отправки`);
       }
     }
 
-    return ctx.reply('✅ Задача создана и отправлена исполнителям.');
+    // Формат оставшегося времени
+    function formatTimeLeft(deadline) {
+      const ms = deadline - new Date();
+      if (ms <= 0) return 'время вышло';
+
+      const totalMinutes = Math.floor(ms / 60000);
+      const days = Math.floor(totalMinutes / 1440);
+      const hours = Math.floor((totalMinutes % 1440) / 60);
+      const minutes = totalMinutes % 60;
+
+      const parts = [];
+      if (days) parts.push(`${days}д`);
+      if (hours) parts.push(`${hours}ч`);
+      if (minutes) parts.push(`${minutes}м`);
+      return parts.join(' ');
+    }
+
+    const summary =
+      `✅ *Задача создана*\n` +
+      `📝 *${escapeMarkdown(text)}*\n` +
+      `⏳ До: ${deadline.toLocaleString()} (${formatTimeLeft(deadline)} осталось)\n\n` +
+      `👥 *Исполнители:*\n` +
+      results.join('\n');
+
+    await ctx.reply(summary, { parse_mode: 'Markdown' });
 
   } catch (e) {
     console.error('Неожиданная ошибка в команде addtask:', e);
     ctx.reply('❌ Произошла неожиданная ошибка при создании задачи.');
   }
 });
+
+// Утилита для экранирования Markdown-символов
+function escapeMarkdown(text) {
+  return text.replace(/([*_`\[\]()~>#+-=|{}.!])/g, '\\$1');
+}
+
 
  
 
