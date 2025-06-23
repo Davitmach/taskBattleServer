@@ -331,6 +331,70 @@ bot.command('mytasks', async (ctx) => {
     ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
   }
 });
+bot.command('stats', async (ctx) => {
+  try {
+    // Общее количество задач
+    const totalTasks = await prisma.taskBot.count();
+
+    // Количество выполненных задач
+    const completedTasks = await prisma.taskBot.count({
+      where: { status: 'COMPLETED' },
+    });
+
+    // Количество задач в прогрессе
+    const inProgressTasks = await prisma.taskBot.count({
+      where: { status: 'IN_PROGRESS' },
+    });
+
+    // Лидер по выполненным задачам среди исполнителей
+    // Считаем количество выполненных задач, сгруппированных по userId из TaskExecutor
+    // Считаем только задачи со статусом COMPLETED
+    const leaderboard = await prisma.taskExecutor.groupBy({
+      by: ['userId'],
+      where: {
+        task: {
+          status: 'COMPLETED',
+        },
+      },
+      _count: {
+        taskId: true,
+      },
+      orderBy: {
+        _count: {
+          taskId: 'desc',
+        },
+      },
+      take: 5, // топ 5 лидеров
+    });
+
+    // Получаем юзеров для лидеров
+    const users = await prisma.userBot.findMany({
+      where: {
+        id: { in: leaderboard.map(l => l.userId) },
+      },
+    });
+
+    // Формируем строку лидеров
+    const leadersText = leaderboard.map((l, i) => {
+      const user = users.find(u => u.id === l.userId);
+      const nameOrUsername = user?.username || user?.name || 'Неизвестный';
+      return `${i + 1}. @${nameOrUsername} — выполнено задач: ${l._count.taskId}`;
+    }).join('\n') || 'Пока нет выполненных задач.';
+
+    const msg =
+      `📊 *Статистика TaskBattle:*\n` +
+      `Всего задач: *${totalTasks}*\n` +
+      `Выполнено: *${completedTasks}*\n` +
+      `В работе: *${inProgressTasks}*\n\n` +
+      `🏆 *Топ исполнителей по выполненным задачам:*\n${leadersText}`;
+
+    await ctx.reply(msg, { parse_mode: 'Markdown' });
+  } catch (error) {
+    console.error('Ошибка в команде stats:', error);
+    ctx.reply('❌ Произошла ошибка при получении статистики.');
+  }
+});
+
 
 
 
