@@ -100,3 +100,35 @@ model Reports {
   sender     User     @relation("Sender", fields: [senderId], references: [id])
   receiver   User     @relation("Receiver", fields: [receiverId], references: [id])
 }
+
+
+
+
+model UserBot {
+  id           String     @id @default(cuid())
+  tgId         String     @unique
+  username     String     @unique
+  createdAt    DateTime   @default(now())
+
+  createdTasks TaskBot[]  @relation("CreatorTasks") // задачи, которые создал этот пользователь
+  tasks        TaskBot[]  @relation("UserTasks")    // задачи, где он исполнитель
+}
+
+model TaskBot {
+  id         String         @id @default(cuid())
+  text       String
+  deadline   DateTime
+  createdAt  DateTime       @default(now())
+  status     TaskStatusBot  @default(IN_PROGRESS)
+
+  creatorId  String
+  creator    UserBot        @relation("CreatorTasks", fields: [creatorId], references: [id])
+
+  executors  UserBot[]      @relation("UserTasks") // исполнители задачи (многие ко многим)
+}
+
+enum TaskStatusBot {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
