@@ -203,54 +203,71 @@ bot.on('callback_query', async (ctx) => {
 });
 
 // Команда просмотра своих задач
+// bot.command('mytasks', async (ctx) => {
+//   try {
+//     const fromId = String(ctx.from.id);
+    
+    
+//     const user = await prisma.userBot.findFirst({
+//       where: { tgId: String(1974611991) },
+//       include: {
+//         taskExecutors: {
+//           where: { task: { status: 'IN_PROGRESS' } },
+//           include: { task: true },
+//         },
+//       },
+//     });
+// console.log(user,'qaqaqaqswswsw');
+//     if (!user) {
+//       console.log(`Пользователь с tgId=${fromId} не найден в базе userBot.`);
+//       return ctx.reply('🗂 У вас нет активных задач или вы не зарегистрированы.');
+//     }
+
+//     if (!user.taskExecutors || user.taskExecutors.length === 0) {
+//       return ctx.reply('🗂 У вас нет активных задач.');
+//     }
+
+//     for (const te of user.taskExecutors) {
+//       const task = te.task;
+//       await ctx.reply(
+//         `📝 *${task.text}*\n⏳ До: ${new Date(task.deadline).toLocaleString()}`,
+//         {
+//           parse_mode: 'Markdown',
+//           reply_markup: {
+//             inline_keyboard: [
+//               [
+//                 { text: '✅ Выполнить', callback_data: `done_${task.id}` },
+//                 { text: '❌ Отменить', callback_data: `cancel_${task.id}` },
+//               ],
+//             ],
+//           },
+//         }
+//       );
+//     }
+//   } catch (error) {
+//     console.error('Ошибка в mytasks:', error);
+//     // Показываем текст ошибки пользователю для отладки (можно убрать потом)
+//     ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
+//   }
+// });
+
 bot.command('mytasks', async (ctx) => {
   try {
-    const fromId = String(ctx.from.id);
+   
     
     
     const user = await prisma.userBot.findFirst({
-      where: { tgId: String(1974611991) },
-      include: {
-        taskExecutors: {
-          where: { task: { status: 'IN_PROGRESS' } },
-          include: { task: true },
-        },
-      },
+     
+      
     });
 console.log(user,'qaqaqaqswswsw');
-    if (!user) {
-      console.log(`Пользователь с tgId=${fromId} не найден в базе userBot.`);
-      return ctx.reply('🗂 У вас нет активных задач или вы не зарегистрированы.');
-    }
-
-    if (!user.taskExecutors || user.taskExecutors.length === 0) {
-      return ctx.reply('🗂 У вас нет активных задач.');
-    }
-
-    for (const te of user.taskExecutors) {
-      const task = te.task;
-      await ctx.reply(
-        `📝 *${task.text}*\n⏳ До: ${new Date(task.deadline).toLocaleString()}`,
-        {
-          parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [
-              [
-                { text: '✅ Выполнить', callback_data: `done_${task.id}` },
-                { text: '❌ Отменить', callback_data: `cancel_${task.id}` },
-              ],
-            ],
-          },
-        }
-      );
-    }
+    
   } catch (error) {
     console.error('Ошибка в mytasks:', error);
     // Показываем текст ошибки пользователю для отладки (можно убрать потом)
     ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
   }
 });
-
 
 
 
