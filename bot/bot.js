@@ -206,6 +206,8 @@ bot.on('callback_query', async (ctx) => {
 bot.command('mytasks', async (ctx) => {
   try {
     const fromId = String(ctx.from.id);
+    console.log(fromId,'qaqaqaqqaqaq');
+    
     const user = await prisma.userBot.findFirst({
       where: { tgId: fromId },
       include: {
