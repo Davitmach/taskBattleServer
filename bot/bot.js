@@ -441,10 +441,26 @@ bot.command('stats', async (ctx) => {
 
 
 function escapeMarkdownV2(text) {
-  // Список спецсимволов MarkdownV2 по документации Telegram
-  // Нужно экранировать: _ * [ ] ( ) ~ ` > # + - = | { } . !
-  // Точка (.) тоже входит, нужно экранировать!
-  return text.replace(/([_*\[\]()~`>#+\-=|{}.!])/g, '\\$1');
+  // Экранирует спецсимволы Telegram MarkdownV2: _ * [ ] ( ) ~ ` > # + - = | { } . !
+  return text.replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1');
+}
+
+
+function formatTimeLeft2(ms) {
+  if (ms <= 0) return '0 мин.';
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  let result = '';
+  if (hours > 0) {
+    result += `${hours} ч\\.`;  // точку экранируем вручную
+  }
+  if (minutes > 0) {
+    if (result.length) result += ' ';
+    result += `${minutes} мин\\.`;  // и здесь тоже
+  }
+  return result;
 }
 
 
@@ -473,7 +489,7 @@ bot.command('alltasks', async (ctx) => {
     for (const task of tasks) {
       const now = Date.now();
       const timeLeftMs = new Date(task.deadline).getTime() - now;
-      const timeLeftFormatted = formatTimeLeft(timeLeftMs);
+      const timeLeftFormatted = formatTimeLeft2(timeLeftMs);
 
       const executors = task.taskExecutors
         .map(e => {
