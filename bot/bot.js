@@ -47,7 +47,9 @@ function parseDurationToMinutes(str) {
 
   return Math.floor(value * (multipliers[unit] || 0));
 }
-
+function escapeMarkdown(text) {
+  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
+}
 // Команда для добавления задачи
 bot.command('addtask', async (ctx) => {
   try {
@@ -202,9 +204,7 @@ bot.command('addtask', async (ctx) => {
 });
 
 // Утилита для экранирования Markdown-символов
-function escapeMarkdown(text) {
-  return text.replace(/([*_`\[\]()~>#+-=|{}.!])/g, '\\$1');
-}
+
 
 
  
@@ -332,9 +332,7 @@ bot.command('mytasks', async (ctx) => {
   }
 });
 
-function escapeMarkdown(text) {
-  return text.replace(/[_*[\]()~`>#+\-=|{}.!]/g, '\\$&');
-}
+
 
 bot.command('alltasks', async (ctx) => {
   const fromId = String(ctx.from.id);
