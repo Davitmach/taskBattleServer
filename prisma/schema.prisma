@@ -143,4 +143,5 @@ enum TaskStatusBot {
   IN_PROGRESS
   COMPLETED
   CANCELLED
+  FAILED
 }

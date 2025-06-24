@@ -1,0 +1,79 @@
+import { prisma } from './prismaClient'; // путь к твоему Prisma клиенту
+import bot from './bot'; // путь к Telegraf боту
+import ms from 'ms'; // если используешь, иначе вручную
+
+function formatMinutesLeft(msLeft) {
+  const minutes = Math.floor(msLeft / 60000);
+  return minutes <= 0 ? '⏱ Время истекло!' : `⏱ Осталось: ${minutes} мин.`;
+}
+
+export async function checkTasksDeadlines() {
+  const tasks = await prisma.taskBot.findMany({
+    where: {
+      status: 'IN_PROGRESS',
+    },
+    include: {
+      taskExecutors: {
+        include: { user: true },
+      },
+    },
+  });
+
+  const now = Date.now();
+
+  for (const task of tasks) {
+    const deadlineMs = new Date(task.deadline).getTime();
+    const diff = deadlineMs - now;
+
+    const alertTimes = [3600000, 1800000, 900000, 300000]; // 1ч, 30м, 15м, 5м
+
+    for (const alert of alertTimes) {
+      if (diff <= alert && diff > alert - 5 * 60000) {
+        for (const executor of task.taskExecutors) {
+          const name = executor.user.username
+            ? `@${executor.user.username}`
+            : `[${executor.user.name || 'пользователь'}](tg://user?id=${executor.user.tgId})`;
+          try {
+            await bot.telegram.sendMessage(
+              executor.user.tgId,
+              `🔔 Напоминание! По задаче *${escapeMarkdownV2(task.text)}*\n${formatMinutesLeft(diff)}`,
+              { parse_mode: 'MarkdownV2' }
+            );
+          } catch (e) {
+            console.error('Не удалось отправить напоминание:', e);
+          }
+        }
+      }
+    }
+
+    // Если время вышло
+    if (diff <= 0) {
+      // Обновляем статус
+      await prisma.taskBot.update({
+        where: { id: task.id },
+        data: { status: 'FAILED' },
+      });
+
+      for (const executor of task.taskExecutors) {
+        const name = executor.user.username
+          ? `@${executor.user.username}`
+          : `[${executor.user.name || 'пользователь'}](tg://user?id=${executor.user.tgId})`;
+        try {
+          await bot.telegram.sendMessage(
+            executor.user.tgId,
+            `❗ Время на выполнение задачи *${escapeMarkdownV2(task.text)}* вышло!\nВы не успели!`,
+            { parse_mode: 'MarkdownV2' }
+          );
+        } catch (e) {
+          console.error('Не удалось отправить оповещение о провале задачи:', e);
+        }
+      }
+    }
+  }
+}
+
+// Каждые 5 минут
+setInterval(checkTasksDeadlines, 5 * 60 * 1000);
+
+// Если хочешь вручную вызвать в начале
+checkTasksDeadlines();
