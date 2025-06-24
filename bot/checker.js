@@ -6,28 +6,13 @@ function checkerformatMinutesLeft(msLeft) {
   const minutes = Math.floor(msLeft / 60000);
   return minutes <= 0 ? '⏱ Время истекло!' : `⏱ Осталось: ${minutes} мин.`;
 }
-function checkerEscapeMarkdownV2(text) {
+function escapeMarkdownV2Full(text) {
   if (!text) return '';
   return text
-    .replace(/_/g, '\\_')
-    .replace(/\*/g, '\\*')
-    .replace(/\[/g, '\\[')
-    .replace(/\]/g, '\\]')
-    .replace(/\(/g, '\\(')
-    .replace(/\)/g, '\\)')
-    .replace(/~/g, '\\~')
-    .replace(/`/g, '\\`')
-    .replace(/>/g, '\\>')
-    .replace(/#/g, '\\#')
-    .replace(/\+/g, '\\+')
-    .replace(/-/g, '\\-')
-    .replace(/=/g, '\\=')
-    .replace(/\|/g, '\\|')
-    .replace(/{/g, '\\{')
-    .replace(/}/g, '\\}')
-    .replace(/\./g, '\\.')
-    .replace(/!/g, '\\!');
+    .replace(/\\/g, '\\\\') // сначала экранируем обратный слэш
+    .replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1'); // экранируем спецсимволы, включая точку и восклицательный знак
 }
+
 
 export async function checkTasksDeadlines() {
   const tasks = await prisma2.taskBot.findMany({
@@ -56,11 +41,13 @@ export async function checkTasksDeadlines() {
             ? `@${executor.user.username}`
             : `[${executor.user.name || 'пользователь'}](tg://user?id=${executor.user.tgId})`;
           try {
-            await bot.telegram.sendMessage(
-              executor.user.tgId,
-              `🔔 Напоминание! По задаче *${checkerEscapeMarkdownV2(task.text)}*\n${checkerformatMinutesLeft(diff)}`,
-              { parse_mode: 'MarkdownV2' }
-            );
+            const message = `❗ Время на выполнение задачи *${task.text}* вышло!\nВы не успели!`;
+const escapedMessage = await escapeMarkdownV2Full(message);
+           await bot.telegram.sendMessage(
+  executor.user.tgId,
+  escapedMessage,
+  { parse_mode: 'MarkdownV2' }
+);
           } catch (e) {
             console.error('Не удалось отправить напоминание:', e);
           }
