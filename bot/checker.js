@@ -36,6 +36,7 @@ export async function checkTasksDeadlines() {
 
     const alertTimes = [3600000, 1800000, 900000, 300000]; // 1ч, 30м, 15м, 5м
 
+    
     for (const alert of alertTimes) {
       if (diff <= alert && diff > alert - 5 * 60000) {
         for (const executor of task.taskExecutors) {
