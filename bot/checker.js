@@ -72,11 +72,13 @@ const escapedMessage = await escapeMarkdownV2Full(message);
           ? `@${executor.user.username}`
           : `[${executor.user.name || 'пользователь'}](tg://user?id=${executor.user.tgId})`;
         try {
-          await bot.telegram.sendMessage(
-            executor.user.tgId,
-            `❗ Время на выполнение задачи *${escapeMarkdownV2Full(task.text)}* вышло!\nВы не успели!`,
-            { parse_mode: 'MarkdownV2' }
-          );
+            const message = `❗ Время на выполнение задачи *${task.text}* вышло!\nВы не успели!`;
+const escapedMessage = await escapeMarkdownV2Full(message);
+             await bot.telegram.sendMessage(
+  executor.user.tgId,
+  escapedMessage,
+  { parse_mode: 'MarkdownV2' }
+);
         } catch (e) {
           console.error('Не удалось отправить оповещение о провале задачи:', e);
         }
