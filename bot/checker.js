@@ -1,19 +1,23 @@
 import { PrismaClient } from "@prisma/client";
 import { bot } from './bot.js';
+
 const prisma = new PrismaClient();
 
+// 🔐 Экранирование MarkdownV2
 function escapeMarkdownV2Full(text) {
   if (!text) return '';
   return text
-    .replace(/\\/g, '\\\\') // сначала экранируем слэши
-    .replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1'); // потом всё остальное
+    .replace(/\\/g, '\\\\') // сначала экранируем обратный слэш
+    .replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1'); // экранируем спецсимволы
 }
 
+// ⏱ Формат оставшегося времени
 function formatMinutesLeft(msLeft) {
   const minutes = Math.floor(msLeft / 60000);
   return minutes <= 0 ? '⏱ Время истекло!' : `⏱ Осталось: ${minutes} мин.`;
 }
 
+// 🧠 Главная проверка
 export async function checkTasksDeadlines() {
   const now = Date.now();
   console.log(`⏰ checkTasksDeadlines вызван в ${new Date().toLocaleString()}`);
@@ -35,21 +39,23 @@ export async function checkTasksDeadlines() {
 
     // 🔔 Напоминания
     for (const alert of alertTimes) {
-      if (diff <= alert && diff > alert - 60000) { // В течение 1 минуты до момента
+      if (diff <= alert && diff > alert - 60000) {
         for (const executor of task.taskExecutors) {
-          const name = executor.user.username
-            ? `@${executor.user.username}`
-            : `[${executor.user.name || 'пользователь'}](tg://user?id=${executor.user.tgId})`;
+          if (!executor.user?.tgId) {
+            console.warn(`⚠️ tgId отсутствует у пользователя ID=${executor.user?.id}`);
+            continue;
+          }
 
-          const msg = `⏰ Напоминание!\nЗадача *${task.text}*\n${formatMinutesLeft(diff)}`;
-          const escaped = escapeMarkdownV2Full(msg);
+          const rawMsg = `⏰ Напоминание!\nЗадача *${task.text}*\n${formatMinutesLeft(diff)}`;
+          const msg = escapeMarkdownV2Full(rawMsg);
 
           try {
-            await bot.telegram.sendMessage(executor.user.tgId, escaped, {
+            console.log(`📩 Отправляю напоминание пользователю ${executor.user.tgId} по задаче "${task.text}"`);
+            await bot.telegram.sendMessage(executor.user.tgId, msg, {
               parse_mode: 'MarkdownV2',
             });
           } catch (e) {
-            console.error('Не удалось отправить напоминание:', e);
+            console.error('❌ Ошибка при отправке напоминания:', e);
           }
         }
       }
@@ -63,15 +69,21 @@ export async function checkTasksDeadlines() {
       });
 
       for (const executor of task.taskExecutors) {
-        const msg = `❗ Время на выполнение задачи *${task.text}* вышло!\nВы не успели!`;
-        const escaped = escapeMarkdownV2Full(msg);
+        if (!executor.user?.tgId) {
+          console.warn(`⚠️ tgId отсутствует у пользователя ID=${executor.user?.id}`);
+          continue;
+        }
+
+        const rawMsg = `❗ Время на выполнение задачи *${task.text}* вышло!\nВы не успели!`;
+        const msg = escapeMarkdownV2Full(rawMsg);
 
         try {
-          await bot.telegram.sendMessage(executor.user.tgId, escaped, {
+          console.log(`📩 Отправляю уведомление о провале задачи "${task.text}" пользователю ${executor.user.tgId}`);
+          await bot.telegram.sendMessage(executor.user.tgId, msg, {
             parse_mode: 'MarkdownV2',
           });
         } catch (e) {
-          console.error('Не удалось отправить оповещение о провале задачи:', e);
+          console.error('❌ Ошибка при отправке уведомления о провале:', e);
         }
       }
     }
