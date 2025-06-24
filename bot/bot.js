@@ -403,7 +403,9 @@ bot.command('stats', async (ctx) => {
     const totalTasks = await prisma.taskBot.count();
     const completedTasks = await prisma.taskBot.count({ where: { status: 'COMPLETED' } });
     const inProgressTasks = await prisma.taskBot.count({ where: { status: 'IN_PROGRESS' } });
+    const failedTasks = await prisma.taskBot.count({ where: { status: 'FAILED' } });
 
+    // Лидерборд — по выполненным задачам
     const leaderboard = await prisma.taskExecutor.groupBy({
       by: ['userId'],
       where: { task: { status: 'COMPLETED' } },
@@ -412,24 +414,42 @@ bot.command('stats', async (ctx) => {
       take: 5,
     });
 
-    const allUsers = await prisma.userBot.findMany();
+    // Найдём пользователей, у которых есть проваленные задачи
+    const failedExecutors = await prisma.taskExecutor.findMany({
+      where: { task: { status: 'FAILED' } },
+      distinct: ['userId'], // уникальные по userId
+      include: { user: true },
+    });
+
+    // Массив userId тех, кто в лидерах (выполнили задачи)
     const leaderUserIds = leaderboard.map(l => l.userId);
-    const slackers = allUsers.filter(u => !leaderUserIds.includes(u.id));
+
+    // Все пользователи
+    const allUsers = await prisma.userBot.findMany();
     const usersById = new Map(allUsers.map(u => [u.id, u]));
 
+    // Пользователи без выполненных задач (т.е. slackers по completed)
+    const slackers = allUsers.filter(u => !leaderUserIds.includes(u.id));
+
+    // Список "раздолбаев" — те, у кого есть FAILED задачи
+    const failedUserIds = new Set(failedExecutors.map(fe => fe.userId));
+    // Уникальные пользователи с проваленными задачами
+    const failedUsers = Array.from(failedUserIds).map(id => usersById.get(id)).filter(Boolean);
+
+    // Формируем текст для лидеров
     const leadersText = leaderboard.map((l, i) => {
       const user = usersById.get(l.userId);
       const displayNameRaw = user?.username || user?.name || 'Неизвестный';
       const displayName = displayNameRaw.trim();
       const escapedName = escapeMarkdownV3(displayName);
       if (user?.tgId) {
-        // Экранируем точку после номера списка
         return `${i + 1}\\. [${escapedName}](tg://user?id=${user.tgId}) — выполнено задач: ${l._count.taskId}`;
       } else {
         return `${i + 1}\\. @${escapedName} — выполнено задач: ${l._count.taskId}`;
       }
     }).join('\n') || 'Пока нет выполненных задач.';
 
+    // Формируем текст для slackers (без выполненных задач)
     const slackersText = slackers.length > 0
       ? slackers.slice(0, 10).map((u, i) => {
           const displayNameRaw = u.username || u.name || 'Неизвестный';
@@ -443,13 +463,29 @@ bot.command('stats', async (ctx) => {
         }).join('\n')
       : 'Все пользователи выполнили хотя бы одну задачу!';
 
+    // Формируем текст для раздолбаев с проваленными задачами
+    const failedText = failedUsers.length > 0
+      ? failedUsers.slice(0, 10).map((u, i) => {
+          const displayNameRaw = u.username || u.name || 'Неизвестный';
+          const displayName = displayNameRaw.trim();
+          const escapedName = escapeMarkdownV3(displayName);
+          if (u.tgId) {
+            return `${i + 1}\\. [${escapedName}](tg://user?id=${u.tgId})`;
+          } else {
+            return `${i + 1}\\. @${escapedName}`;
+          }
+        }).join('\n')
+      : 'Пока никто не провалил задачи!';
+
     const msg =
       `📊 *Статистика TaskBattle:*\n` +
       `Всего задач: *${totalTasks}*\n` +
       `Выполнено: *${completedTasks}*\n` +
-      `В работе: *${inProgressTasks}*\n\n` +
+      `В работе: *${inProgressTasks}*\n` +
+      `Провалено: *${failedTasks}*\n\n` +
       `🏆 *Топ исполнителей по выполненным задачам:*\n${leadersText}\n\n` +
-      `⚠️ *Пользователи без выполненных задач:*\n${slackersText}`;
+      `⚠️ *Пользователи без выполненных задач:*\n${slackersText}\n\n` +
+      `💀 *Пользователи с проваленными задачами:*\n${failedText}`;
 
     await ctx.reply(msg, { parse_mode: 'MarkdownV2' });
   } catch (error) {
@@ -457,6 +493,7 @@ bot.command('stats', async (ctx) => {
     ctx.reply('❌ Произошла ошибка при получении статистики.');
   }
 });
+
 
 
 
