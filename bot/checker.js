@@ -15,6 +15,8 @@ function escapeMarkdownV2Full(text) {
 
 
 export async function checkTasksDeadlines() {
+  console.log('qaq');
+  
   const tasks = await prisma2.taskBot.findMany({
     where: {
       status: 'IN_PROGRESS',
@@ -83,7 +85,7 @@ const escapedMessage = await escapeMarkdownV2Full(message);
 }
 
 // Каждые 5 минут
-setInterval(checkTasksDeadlines, 5 * 60 * 1000);
+setInterval(checkTasksDeadlines, 1 * 60 * 1000);
 
 // Если хочешь вручную вызвать в начале
 checkTasksDeadlines();
