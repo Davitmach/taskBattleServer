@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import {bot} from './bot.js'; // путь к Telegraf боту
 import ms from 'ms'; // если используешь, иначе вручную
-
+const prisma2  =  PrismaClient()
 function formatMinutesLeft(msLeft) {
   const minutes = Math.floor(msLeft / 60000);
   return minutes <= 0 ? '⏱ Время истекло!' : `⏱ Осталось: ${minutes} мин.`;
@@ -30,7 +30,7 @@ function escapeMarkdownV2(text) {
 }
 
 export async function checkTasksDeadlines() {
-  const tasks = await prisma.taskBot.findMany({
+  const tasks = await prisma2.taskBot.findMany({
     where: {
       status: 'IN_PROGRESS',
     },
@@ -71,7 +71,7 @@ export async function checkTasksDeadlines() {
     // Если время вышло
     if (diff <= 0) {
       // Обновляем статус
-      await prisma.taskBot.update({
+      await prisma2.taskBot.update({
         where: { id: task.id },
         data: { status: 'FAILED' },
       });
