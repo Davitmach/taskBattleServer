@@ -74,7 +74,7 @@ const escapedMessage = await escapeMarkdownV2Full(message);
         try {
           await bot.telegram.sendMessage(
             executor.user.tgId,
-            `❗ Время на выполнение задачи *${checkerEscapeMarkdownV2(task.text)}* вышло!\nВы не успели!`,
+            `❗ Время на выполнение задачи *${escapeMarkdownV2Full(task.text)}* вышло!\nВы не успели!`,
             { parse_mode: 'MarkdownV2' }
           );
         } catch (e) {
