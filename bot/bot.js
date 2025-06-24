@@ -245,51 +245,6 @@ bot.command('addtask', async (ctx) => {
 
  
 
-
-// Обработка кнопок Выполнить и Отменить
-bot.on('callback_query', async (ctx) => {
-  try {
-    const data = ctx.callbackQuery.data;
-    const fromId = String(ctx.from.id);
-
-    if (!data.startsWith('done_') && !data.startsWith('cancel_')) {
-      return ctx.answerCbQuery('Неизвестная команда.');
-    }
-
-    const [action, taskId] = data.split('_');
-
-    const task = await prisma.taskBot.findUnique({
-      where: { id: taskId },
-      include: { taskExecutors: true },
-    });
-    if (!task) return ctx.answerCbQuery('Задача не найдена.');
-
-    // Запретить изменение, если статус задачи не IN_PROGRESS
-    if (task.status !== 'IN_PROGRESS') {
-      return ctx.answerCbQuery('❌ Невозможно изменить статус — задача уже завершена или отменена.', { show_alert: true });
-    }
-
-    const user = await prisma.userBot.findFirst({ where: { tgId: fromId } });
-    if (!user) return ctx.answerCbQuery('⛔ Вы не зарегистрированы.');
-
-    const isExecutor = task.taskExecutors.some(e => e.userId === user.id);
-    if (!isExecutor) return ctx.answerCbQuery('⛔ Вы не участник этой задачи.');
-
-    const status = action === 'done' ? 'COMPLETED' : 'CANCELLED';
-
-    await prisma.taskBot.update({
-      where: { id: taskId },
-      data: { status },
-    });
-
-    await ctx.editMessageText(`Статус задачи обновлён: ${status === 'COMPLETED' ? '✅ Выполнена' : '❌ Отменена'}`);
-    return ctx.answerCbQuery('✅ Готово');
-  } catch (error) {
-    console.error('Ошибка в callback_query:', error);
-    return ctx.answerCbQuery('Произошла ошибка.');
-  }
-});
-
 function formatTimeLeft3(ms) {
   if (ms <= 0) return 'время вышло';
 
@@ -304,6 +259,125 @@ function formatTimeLeft3(ms) {
 
   return parts.join(' ') || 'меньше минуты';
 }
+// Обработка кнопок Выполнить и Отменить
+bot.on('callback_query', async (ctx) => {
+  try {
+    const data = ctx.callbackQuery.data;
+    const fromId = String(ctx.from.id);
+
+    if (data.startsWith('done_')) {
+      // Исполнитель нажал "Выполнить"
+      const taskId = data.split('_')[1];
+
+      const task = await prisma.taskBot.findUnique({
+        where: { id: taskId },
+        include: { taskExecutors: true },
+      });
+      if (!task) return ctx.answerCbQuery('Задача не найдена.');
+
+      if (task.status !== 'IN_PROGRESS') {
+        return ctx.answerCbQuery('Задача уже не в работе.', { show_alert: true });
+      }
+
+      const user = await prisma.userBot.findFirst({ where: { tgId: fromId } });
+      if (!user) return ctx.answerCbQuery('Вы не зарегистрированы.');
+
+      const isExecutor = task.taskExecutors.some(e => e.userId === user.id);
+      if (!isExecutor) return ctx.answerCbQuery('Вы не участник этой задачи.');
+
+      // Кнопки для админов
+      const adminButtons = [
+        [
+          { text: '✅ Подтвердить выполнение', callback_data: `admin_confirm_${task.id}_${fromId}` },
+          { text: '❌ Отказать', callback_data: `admin_reject_${task.id}_${fromId}` }
+        ],
+        [
+          { text: '↩️ Вернуть в работу', callback_data: `admin_reopen_${task.id}_${fromId}` }
+        ]
+      ];
+
+      // Отправляем всем админам
+      for (const adminId of ADMIN_IDS) {
+        try {
+          await ctx.telegram.sendMessage(
+            adminId,
+            `Пользователь @${user.username || user.tgId} хочет отметить задачу выполненной:\n\n${task.text}`,
+            { reply_markup: { inline_keyboard: adminButtons } }
+          );
+        } catch (e) {
+          console.error(`Ошибка отправки администратору ${adminId}:`, e);
+        }
+      }
+
+      await ctx.answerCbQuery('Запрос на выполнение отправлен администраторам.');
+      return;
+    }
+
+    if (data.startsWith('admin_confirm_') || data.startsWith('admin_reject_') || data.startsWith('admin_reopen_')) {
+      const [prefix, action, taskId, executorTgId] = data.split('_');
+
+      if (!ADMIN_IDS.includes(fromId)) {
+        return ctx.answerCbQuery('Эти кнопки доступны только администраторам.', { show_alert: true });
+      }
+
+      const task = await prisma.taskBot.findUnique({ where: { id: taskId } });
+      if (!task) return ctx.answerCbQuery('Задача не найдена.');
+
+      if (action === 'confirm') {
+        await prisma.taskBot.update({
+          where: { id: taskId },
+          data: { status: 'COMPLETED' },
+        });
+
+        await ctx.editMessageText(`Задача *выполнена* и подтверждена администратором.`, { parse_mode: 'Markdown' });
+        await ctx.answerCbQuery('Вы подтвердили выполнение.');
+
+        // Можно уведомить исполнителя:
+        try {
+          await ctx.telegram.sendMessage(executorTgId, `Ваша задача "${task.text}" подтверждена и отмечена выполненной ✅.`);
+        } catch {}
+      } else if (action === 'reject') {
+        await prisma.taskBot.update({
+          where: { id: taskId },
+          data: { status: 'CANCELLED' },
+        });
+
+        await ctx.editMessageText(`Задача *отклонена* администратором и отменена.`, { parse_mode: 'Markdown' });
+        await ctx.answerCbQuery('Вы отклонили выполнение.');
+
+        // Уведомляем исполнителя
+        try {
+          await ctx.telegram.sendMessage(executorTgId, `К сожалению, ваша задача "${task.text}" была отклонена администратором и отменена ❌.`);
+        } catch {}
+      } else if (action === 'reopen') {
+        await prisma.taskBot.update({
+          where: { id: taskId },
+          data: { status: 'IN_PROGRESS' },
+        });
+
+        await ctx.editMessageText(`Задача возвращена в работу администратором.`, { parse_mode: 'Markdown' });
+        await ctx.answerCbQuery('Вы вернули задачу в работу.');
+
+        // Уведомить исполнителя
+        try {
+          await ctx.telegram.sendMessage(executorTgId, `Ваша задача "${task.text}" возвращена в работу администратором.`);
+        } catch {}
+      } else {
+        return ctx.answerCbQuery('Неизвестное действие.');
+      }
+
+      return;
+    }
+
+    // Если пришла неизвестная команда
+    return ctx.answerCbQuery('Неизвестная команда.');
+  } catch (error) {
+    console.error('Ошибка в callback_query:', error);
+    return ctx.answerCbQuery('Произошла ошибка.');
+  }
+});
+
+
 
 // Команда просмотра своих задач
 bot.command('mytasks', async (ctx) => {
