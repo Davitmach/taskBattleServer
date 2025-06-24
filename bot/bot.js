@@ -1,13 +1,10 @@
 import { Telegraf, Markup } from 'telegraf';
 import dotenv from 'dotenv';
 import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
-// import './checker.js'
 dotenv.config();
-
-
+const prisma = new PrismaClient();
 export const bot = new Telegraf(process.env.TG_BOT_TOKEN);
-
+import './checker.js';
 // Команда /start
 bot.start(async (ctx) => {
   ctx.reply(
