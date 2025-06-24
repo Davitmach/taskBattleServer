@@ -292,6 +292,20 @@ bot.on('callback_query', async (ctx) => {
   }
 });
 
+function formatTimeLeft3(ms) {
+  if (ms <= 0) return 'время вышло';
+
+  const minutes = Math.floor(ms / 60000) % 60;
+  const hours = Math.floor(ms / (1000 * 60 * 60)) % 24;
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+
+  const parts = [];
+  if (days > 0) parts.push(`${days} дн.`);
+  if (hours > 0) parts.push(`${hours} ч.`);
+  if (minutes > 0) parts.push(`${minutes} мин.`);
+
+  return parts.join(' ') || 'меньше минуты';
+}
 
 // Команда просмотра своих задач
 bot.command('mytasks', async (ctx) => {
@@ -355,8 +369,10 @@ bot.command('mytasks', async (ctx) => {
 
     for (const te of user.taskExecutors) {
       const task = te.task;
+        const timeLeftMs = new Date(task.deadline).getTime() - Date.now();
+  const timeLeftFormatted = formatTimeLeft2(timeLeftMs);
       await ctx.reply(
-        `📝 *${task.text}*\n⏳ До: ${new Date(task.deadline).toLocaleString()}`,
+          `📝 *${task.text}*\n⏳ Осталось: ${timeLeftFormatted}`,
         {
           parse_mode: 'Markdown',
           reply_markup: {
