@@ -1,4 +1,4 @@
-import { prisma } from './prismaClient'; // путь к твоему Prisma клиенту
+import { PrismaClient } from "@prisma/client";
 import bot from './bot.js'; // путь к Telegraf боту
 import ms from 'ms'; // если используешь, иначе вручную
 
@@ -76,7 +76,7 @@ export async function checkTasksDeadlines() {
         data: { status: 'FAILED' },
       });
 
-      
+
       for (const executor of task.taskExecutors) {
         const name = executor.user.username
           ? `@${executor.user.username}`
