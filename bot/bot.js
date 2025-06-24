@@ -2,7 +2,7 @@ import { Telegraf, Markup } from 'telegraf';
 import dotenv from 'dotenv';
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-import './checker.js'
+// import './checker.js'
 dotenv.config();
 
 
