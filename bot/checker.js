@@ -1,5 +1,5 @@
 import { prisma } from './prismaClient'; // путь к твоему Prisma клиенту
-import bot from './bot'; // путь к Telegraf боту
+import bot from './bot.js'; // путь к Telegraf боту
 import ms from 'ms'; // если используешь, иначе вручную
 
 function formatMinutesLeft(msLeft) {
