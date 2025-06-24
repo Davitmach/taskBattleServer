@@ -1,7 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import {bot} from './bot.js'; // путь к Telegraf боту
 import ms from 'ms'; // если используешь, иначе вручную
-const prisma2  =  PrismaClient()
+const prisma2  =  new PrismaClient()
 function checkerformatMinutesLeft(msLeft) {
   const minutes = Math.floor(msLeft / 60000);
   return minutes <= 0 ? '⏱ Время истекло!' : `⏱ Осталось: ${minutes} мин.`;
