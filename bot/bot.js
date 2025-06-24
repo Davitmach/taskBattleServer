@@ -506,7 +506,8 @@ bot.command('alltasks', async (ctx) => {
     for (const task of tasks) {
       const now = Date.now();
       const timeLeftMs = new Date(task.deadline).getTime() - now;
-      const timeLeftFormatted = formatTimeLeft2(timeLeftMs);
+      const timeLeftFormatted = escapeMarkdownalltask(formatTimeLeft2(timeLeftMs));
+
 
       const executors = task.taskExecutors
         .map(e => {
