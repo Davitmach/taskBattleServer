@@ -29,6 +29,7 @@ export const SendFriendRequest = async (receiverChatId, friendRequestId,name) =>
     });
 
 
+    
 
 
     if (!user) {
