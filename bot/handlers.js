@@ -66,7 +66,12 @@ bot.on('callback_query', async (ctx) => {
     const friendRequestId = data.replace("accept_friend_", "");
 const initData = data.split('|')[1]; 
 const friendId = friendRequestId.split('|')[0]; 
-
+const checkFriend = await prisma.userFriend.findMany({
+  where:{
+    id:friendId
+  }
+})
+if(checkFriend.length>0) {
   const add = await fetch(`http://localhost:3000/api/user/friend/accept/${friendId}`, {
   method: 'GET', 
   headers: {
@@ -74,17 +79,31 @@ const friendId = friendRequestId.split('|')[0];
   }
 });
 
-console.log(add);
+
 
     await ctx.editMessageText("✅ Запрос в друзья принят.");
     await ctx.answerCbQuery();
+}
+else {
+  await ctx.editMessageText("Запрос в друзья был удален");
+    await ctx.answerCbQuery();
+}
 
   } else if (data.startsWith("reject_friend_")) {
     const friendRequestId = data.replace("reject_friend_", "");
 const initData = friendRequestId.split('|')[1];
-console.log(initData,'aqaqadedadea');
+
 
 const friendId = friendRequestId.split('|')[0];
+console.log(friendId);
+const checkFriend = await prisma.userFriend.findMany({
+  where:{
+    id:friendId
+  }
+})
+if(checkFriend.length>0) {
+
+
    const rej = await fetch(`http://localhost:3000/api/user/friend/deleteOrCancel/${friendId}`,{
  method: 'GET', 
   headers: {
@@ -96,7 +115,11 @@ const friendId = friendRequestId.split('|')[0];
 
     await ctx.editMessageText("❌ Запрос в друзья отклонён.");
     await ctx.answerCbQuery();
-
+  }
+  else {
+    await ctx.editMessageText("Запрос в друзья был удален.");
+    await ctx.answerCbQuery();
+  }
   } else {
     await ctx.answerCbQuery("Неизвестная команда.");
   }
