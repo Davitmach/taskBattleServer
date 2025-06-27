@@ -575,86 +575,86 @@ bot.catch((err, ctx) => {
 
 
 
-function escapeMarkdownV2(text) {
-  // Экранирует спецсимволы Telegram MarkdownV2: _ * [ ] ( ) ~ ` > # + - = | { } . !
-  return text.replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1');
-}
+// function escapeMarkdownV2(text) {
+//   // Экранирует спецсимволы Telegram MarkdownV2: _ * [ ] ( ) ~ ` > # + - = | { } . !
+//   return text.replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1');
+// }
 
 
-function formatTimeLeft2(ms) {
-  if (ms <= 0) return '0 мин.';
-  const totalMinutes = Math.floor(ms / 60000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
+// function formatTimeLeft2(ms) {
+//   if (ms <= 0) return '0 мин.';
+//   const totalMinutes = Math.floor(ms / 60000);
+//   const hours = Math.floor(totalMinutes / 60);
+//   const minutes = totalMinutes % 60;
 
-  let result = '';
-  if (hours > 0) {
-    result += `${hours} ч\\.`;  // точку экранируем вручную
-  }
-  if (minutes > 0) {
-    if (result.length) result += ' ';
-    result += `${minutes} мин\\.`;  // и здесь тоже
-  }
-  return result;
-}
-
-
-
-function escapeMarkdownalltask(text) {
-  if (!text) return '';
-  return text
-    .replace(/\\/g, '\\\\')     // Экранируем обратный слэш первым
-    .replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1'); // Экранируем спецсимволы, включая точку
-}
-
-bot.command('alltasks', async (ctx) => {
-  const fromId = String(ctx.from.id);
-  if (!ADMIN_IDS.includes(fromId)) {
-    return ctx.reply('⛔ Только админы могут просматривать все задачи.');
-  }
-
-  try {
-    const tasks = await prisma.taskBot.findMany({
-      where: { status: 'IN_PROGRESS' },
-      include: {
-        taskExecutors: {
-          include: { user: true },
-        },
-        creator: true,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
-
-    if (tasks.length === 0) {
-      return ctx.reply('📂 Активных задач нет.');
-    }
-
-    for (const task of tasks) {
-      const now = Date.now();
-      const timeLeftMs = new Date(task.deadline).getTime() - now;
-      const timeLeftFormatted = escapeMarkdownalltask(formatTimeLeft2(timeLeftMs));
+//   let result = '';
+//   if (hours > 0) {
+//     result += `${hours} ч\\.`;  // точку экранируем вручную
+//   }
+//   if (minutes > 0) {
+//     if (result.length) result += ' ';
+//     result += `${minutes} мин\\.`;  // и здесь тоже
+//   }
+//   return result;
+// }
 
 
-      const executors = task.taskExecutors
-        .map(e => {
-          const name = escapeMarkdownalltask(e.user.name || e.user.username || String(e.user.tgId) || 'Без имени');
-          return `• ${name}`;
-        })
-        .join('\n');
 
-      const creatorName = escapeMarkdownalltask(task.creator.name || task.creator.username || String(task.creator.tgId) || 'Без имени');
-      const taskText = escapeMarkdownalltask(task.text);
+// function escapeMarkdownalltask(text) {
+//   if (!text) return '';
+//   return text
+//     .replace(/\\/g, '\\\\')     // Экранируем обратный слэш первым
+//     .replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1'); // Экранируем спецсимволы, включая точку
+// }
 
-      await ctx.reply(
-        `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ Осталось: ${timeLeftFormatted}\n\n🧑‍💻 Исполнители:\n${executors}`,
-        { parse_mode: 'MarkdownV2' }
-      );
-    }
-  } catch (err) {
-    console.error('Ошибка в alltasks:', err);
-    return ctx.reply('❌ Ошибка при получении задач.');
-  }
-});
+// bot.command('alltasks', async (ctx) => {
+//   const fromId = String(ctx.from.id);
+//   if (!ADMIN_IDS.includes(fromId)) {
+//     return ctx.reply('⛔ Только админы могут просматривать все задачи.');
+//   }
+
+//   try {
+//     const tasks = await prisma.taskBot.findMany({
+//       where: { status: 'IN_PROGRESS' },
+//       include: {
+//         taskExecutors: {
+//           include: { user: true },
+//         },
+//         creator: true,
+//       },
+//       orderBy: { createdAt: 'desc' },
+//     });
+
+//     if (tasks.length === 0) {
+//       return ctx.reply('📂 Активных задач нет.');
+//     }
+
+//     for (const task of tasks) {
+//       const now = Date.now();
+//       const timeLeftMs = new Date(task.deadline).getTime() - now;
+//       const timeLeftFormatted = escapeMarkdownalltask(formatTimeLeft2(timeLeftMs));
+
+
+//       const executors = task.taskExecutors
+//         .map(e => {
+//           const name = escapeMarkdownalltask(e.user.name || e.user.username || String(e.user.tgId) || 'Без имени');
+//           return `• ${name}`;
+//         })
+//         .join('\n');
+
+//       const creatorName = escapeMarkdownalltask(task.creator.name || task.creator.username || String(task.creator.tgId) || 'Без имени');
+//       const taskText = escapeMarkdownalltask(task.text);
+
+//       await ctx.reply(
+//         `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ Осталось: ${timeLeftFormatted}\n\n🧑‍💻 Исполнители:\n${executors}`,
+//         { parse_mode: 'MarkdownV2' }
+//       );
+//     }
+//   } catch (err) {
+//     console.error('Ошибка в alltasks:', err);
+//     return ctx.reply('❌ Ошибка при получении задач.');
+//   }
+// });
 
 
 
