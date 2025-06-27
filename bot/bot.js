@@ -26,635 +26,635 @@ bot.catch((err, ctx) => {
 });
 
 
-// const ADMIN_IDS = ['482233894', '1974611991']; // Твои админы (tgId как строки)
+const ADMIN_IDS = ['482233894', '1974611991']; // Твои админы (tgId как строки)
 
-// function parseDurationToMinutes(str) {
-//   const regex = /^(\d+(\.\d+)?)([mhdw])$/;
-//   const match = str.match(regex);
-//   if (!match) return 0;
+function parseDurationToMinutes(str) {
+  const regex = /^(\d+(\.\d+)?)([mhdw])$/;
+  const match = str.match(regex);
+  if (!match) return 0;
 
-//   const value = parseFloat(match[1]);
-//   const unit = match[3];
+  const value = parseFloat(match[1]);
+  const unit = match[3];
 
-//   const multipliers = {
-//     m: 1,
-//     h: 60,
-//     d: 1440,
-//     w: 10080,
-//   };
+  const multipliers = {
+    m: 1,
+    h: 60,
+    d: 1440,
+    w: 10080,
+  };
 
-//   return Math.floor(value * (multipliers[unit] || 0));
-// }
-// function escapeMarkdown(text) {
-//   return text
-//     .replace(/_/g, '\\_')
-//     .replace(/\*/g, '\\*')
-//     .replace(/\[/g, '\\[')
-//     .replace(/\]/g, '\\]')
-//     .replace(/\(/g, '\\(')
-//     .replace(/\)/g, '\\)')
-//     .replace(/~/g, '\\~')
-//     .replace(/`/g, '\\`')
-//     .replace(/>/g, '\\>')
-//     .replace(/#/g, '\\#')
-//     .replace(/\+/g, '\\+')
-//     .replace(/-/g, '\\-')
-//     .replace(/=/g, '\\=')
-//     .replace(/\|/g, '\\|')
-//     .replace(/\{/g, '\\{')
-//     .replace(/\}/g, '\\}')
-//     .replace(/\./g, '\\.')  // обязательно экранировать точку
-//     .replace(/!/g, '\\!')
-//     .replace(/\\/g, '\\\\'); // сначала нужно экранировать обратный слэш
-// }
+  return Math.floor(value * (multipliers[unit] || 0));
+}
+function escapeMarkdown(text) {
+  return text
+    .replace(/_/g, '\\_')
+    .replace(/\*/g, '\\*')
+    .replace(/\[/g, '\\[')
+    .replace(/\]/g, '\\]')
+    .replace(/\(/g, '\\(')
+    .replace(/\)/g, '\\)')
+    .replace(/~/g, '\\~')
+    .replace(/`/g, '\\`')
+    .replace(/>/g, '\\>')
+    .replace(/#/g, '\\#')
+    .replace(/\+/g, '\\+')
+    .replace(/-/g, '\\-')
+    .replace(/=/g, '\\=')
+    .replace(/\|/g, '\\|')
+    .replace(/\{/g, '\\{')
+    .replace(/\}/g, '\\}')
+    .replace(/\./g, '\\.')  // обязательно экранировать точку
+    .replace(/!/g, '\\!')
+    .replace(/\\/g, '\\\\'); // сначала нужно экранировать обратный слэш
+}
 
-// function formatTimeLeft(ms) {
-//   if (ms <= 0) return '⏰ Время истекло';
+function formatTimeLeft(ms) {
+  if (ms <= 0) return '⏰ Время истекло';
 
-//   const totalSeconds = Math.floor(ms / 1000);
-//   const days = Math.floor(totalSeconds / 86400);
-//   const hours = Math.floor((totalSeconds % 86400) / 3600);
-//   const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const totalSeconds = Math.floor(ms / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
 
-//   let parts = [];
-//   if (days > 0) parts.push(`${days} дн.`);
-//   if (hours > 0) parts.push(`${hours} ч.`);
-//   if (minutes > 0) parts.push(`${minutes} мин.`);
-//   if (parts.length === 0) parts.push('< 1 мин.');
+  let parts = [];
+  if (days > 0) parts.push(`${days} дн.`);
+  if (hours > 0) parts.push(`${hours} ч.`);
+  if (minutes > 0) parts.push(`${minutes} мин.`);
+  if (parts.length === 0) parts.push('< 1 мин.');
 
-//   return parts.join(' ');
-// }
+  return parts.join(' ');
+}
 
 
-// // Команда для добавления задачи
-// bot.command('addtask', async (ctx) => {
-//   try {
-//     const fromId = String(ctx.from.id);
-//     if (!ADMIN_IDS.includes(fromId)) {
-//       return ctx.reply('⛔ Только админы могут добавлять задачи.');
-//     }
+// Команда для добавления задачи
+bot.command('addtask', async (ctx) => {
+  try {
+    const fromId = String(ctx.from.id);
+    if (!ADMIN_IDS.includes(fromId)) {
+      return ctx.reply('⛔ Только админы могут добавлять задачи.');
+    }
 
-//     // Формат: /addtask @user1 @user2 Текст задачи 1h
-//     const args = ctx.message.text.split(' ').slice(1);
-//     if (args.length < 3) {
-//       return ctx.reply('⚠️ Формат: /addtask @user1 @user2 Текст задачи 1h');
-//     }
+    // Формат: /addtask @user1 @user2 Текст задачи 1h
+    const args = ctx.message.text.split(' ').slice(1);
+    if (args.length < 3) {
+      return ctx.reply('⚠️ Формат: /addtask @user1 @user2 Текст задачи 1h');
+    }
 
-//     const usernames = args.filter(a => a.startsWith('@')).map(a => a.slice(1));
-//     const timeArg = args[args.length - 1];
-//     const text = args.slice(usernames.length, args.length - 1).join(' ');
+    const usernames = args.filter(a => a.startsWith('@')).map(a => a.slice(1));
+    const timeArg = args[args.length - 1];
+    const text = args.slice(usernames.length, args.length - 1).join(' ');
 
-//     const minutes = parseDurationToMinutes(timeArg);
-//     if (minutes <= 0) {
-//       return ctx.reply('⏰ Укажи корректное время, например 10m, 1.5h, 2d');
-//     }
+    const minutes = parseDurationToMinutes(timeArg);
+    if (minutes <= 0) {
+      return ctx.reply('⏰ Укажи корректное время, например 10m, 1.5h, 2d');
+    }
 
-//     const deadline = new Date(Date.now() + minutes * 60000);
+    const deadline = new Date(Date.now() + minutes * 60000);
 
-//     // Создатель
-//     let creator;
-//     try {
-//       creator = await prisma.userBot.upsert({
-//         where: { tgId: fromId },
-//         update: {
-//           username: ctx.from.username || null,
-//           name: ctx.from.first_name || null,
-//         },
-//         create: {
-//           tgId: fromId,
-//           username: ctx.from.username || null,
-//           name: ctx.from.first_name || null,
-//         },
-//       });
-//     } catch (err) {
-//       console.error('Ошибка при создании/получении создателя:', err);
-//       return ctx.reply('❌ Ошибка при работе с создателем задачи.');
-//     }
+    // Создатель
+    let creator;
+    try {
+      creator = await prisma.userBot.upsert({
+        where: { tgId: fromId },
+        update: {
+          username: ctx.from.username || null,
+          name: ctx.from.first_name || null,
+        },
+        create: {
+          tgId: fromId,
+          username: ctx.from.username || null,
+          name: ctx.from.first_name || null,
+        },
+      });
+    } catch (err) {
+      console.error('Ошибка при создании/получении создателя:', err);
+      return ctx.reply('❌ Ошибка при работе с создателем задачи.');
+    }
 
-//     // Исполнители
-//     let executors;
-//     try {
-//       executors = await Promise.all(usernames.map(async (u) => {
-//         try {
-//           let user = await prisma.userBot.findUnique({ where: { username: u } });
-//           if (!user) {
-//             user = await prisma.userBot.create({
-//               data: {
-//                 username: u,
-//                 tgId: null,
-//                 name: null,
-//               },
-//             });
-//           }
-//           return user;
-//         } catch (err) {
-//           console.error(`Ошибка при создании/получении исполнителя @${u}:`, err);
-//           throw new Error(`Ошибка с исполнителем @${u}`);
-//         }
-//       }));
-//     } catch (err) {
-//       return ctx.reply(`❌ ${err.message}`);
-//     }
+    // Исполнители
+    let executors;
+    try {
+      executors = await Promise.all(usernames.map(async (u) => {
+        try {
+          let user = await prisma.userBot.findUnique({ where: { username: u } });
+          if (!user) {
+            user = await prisma.userBot.create({
+              data: {
+                username: u,
+                tgId: null,
+                name: null,
+              },
+            });
+          }
+          return user;
+        } catch (err) {
+          console.error(`Ошибка при создании/получении исполнителя @${u}:`, err);
+          throw new Error(`Ошибка с исполнителем @${u}`);
+        }
+      }));
+    } catch (err) {
+      return ctx.reply(`❌ ${err.message}`);
+    }
 
-//     // Задача
-//     let task;
-//     try {
-//       task = await prisma.taskBot.create({
-//         data: {
-//           text,
-//           deadline,
-//           creatorId: creator.id,
-//           taskExecutors: {
-//             create: executors.map(exec => ({ userId: exec.id })),
-//           },
-//         },
-//         include: { taskExecutors: { include: { user: true } } },
-//       });
-//     } catch (err) {
-//       console.error('Ошибка при создании задачи:', err);
-//       return ctx.reply('❌ Ошибка при создании задачи в базе.');
-//     }
+    // Задача
+    let task;
+    try {
+      task = await prisma.taskBot.create({
+        data: {
+          text,
+          deadline,
+          creatorId: creator.id,
+          taskExecutors: {
+            create: executors.map(exec => ({ userId: exec.id })),
+          },
+        },
+        include: { taskExecutors: { include: { user: true } } },
+      });
+    } catch (err) {
+      console.error('Ошибка при создании задачи:', err);
+      return ctx.reply('❌ Ошибка при создании задачи в базе.');
+    }
 
-//     // Отправка уведомлений
-//     const results = [];
+    // Отправка уведомлений
+    const results = [];
 
-//     for (const exec of task.taskExecutors) {
-//       const u = exec.user;
-//       if (!u.tgId) {
-//         results.push(`• ${u.username} — 🔴 не отправлено (нет tgId)`);
-//         continue;
-//       }
-//       try {
-//         await bot.telegram.sendMessage(
-//           u.tgId,
-//           `📝 Новая задача:\n*${escapeMarkdown(text)}*\n⏳ До: ${deadline.toLocaleString()}`,
-//           {
-//             parse_mode: 'Markdown',
-//             reply_markup: {
-//               inline_keyboard: [
-//                 [
-//                   { text: '✅ Выполнить', callback_data: `done_${task.id}` },
-//                   { text: '❌ Отменить', callback_data: `cancel_${task.id}` },
-//                 ],
-//               ],
-//             },
-//           }
-//         );
-//         results.push(`• ${u.username} — 🟢 отправлено`);
-//       } catch (err) {
-//         console.error(`Ошибка при отправке @${u.username}:`, err);
-//         results.push(`• ${u.username} — 🔴 ошибка отправки`);
-//       }
-//     }
+    for (const exec of task.taskExecutors) {
+      const u = exec.user;
+      if (!u.tgId) {
+        results.push(`• ${u.username} — 🔴 не отправлено (нет tgId)`);
+        continue;
+      }
+      try {
+        await bot.telegram.sendMessage(
+          u.tgId,
+          `📝 Новая задача:\n*${escapeMarkdown(text)}*\n⏳ До: ${deadline.toLocaleString()}`,
+          {
+            parse_mode: 'Markdown',
+            reply_markup: {
+              inline_keyboard: [
+                [
+                  { text: '✅ Выполнить', callback_data: `done_${task.id}` },
+                  { text: '❌ Отменить', callback_data: `cancel_${task.id}` },
+                ],
+              ],
+            },
+          }
+        );
+        results.push(`• ${u.username} — 🟢 отправлено`);
+      } catch (err) {
+        console.error(`Ошибка при отправке @${u.username}:`, err);
+        results.push(`• ${u.username} — 🔴 ошибка отправки`);
+      }
+    }
 
-//     // Формат оставшегося времени
-//     function formatTimeLeft(deadline) {
-//       const ms = deadline - new Date();
-//       if (ms <= 0) return 'время вышло';
+    // Формат оставшегося времени
+    function formatTimeLeft(deadline) {
+      const ms = deadline - new Date();
+      if (ms <= 0) return 'время вышло';
 
-//       const totalMinutes = Math.floor(ms / 60000);
-//       const days = Math.floor(totalMinutes / 1440);
-//       const hours = Math.floor((totalMinutes % 1440) / 60);
-//       const minutes = totalMinutes % 60;
+      const totalMinutes = Math.floor(ms / 60000);
+      const days = Math.floor(totalMinutes / 1440);
+      const hours = Math.floor((totalMinutes % 1440) / 60);
+      const minutes = totalMinutes % 60;
 
-//       const parts = [];
-//       if (days) parts.push(`${days}д`);
-//       if (hours) parts.push(`${hours}ч`);
-//       if (minutes) parts.push(`${minutes}м`);
-//       return parts.join(' ');
-//     }
+      const parts = [];
+      if (days) parts.push(`${days}д`);
+      if (hours) parts.push(`${hours}ч`);
+      if (minutes) parts.push(`${minutes}м`);
+      return parts.join(' ');
+    }
 
-//     const summary =
-//       `✅ *Задача создана*\n` +
-//       `📝 *${escapeMarkdown(text)}*\n` +
-//       `⏳ (${formatTimeLeft(deadline)} осталось)\n\n` +
-//       `👥 *Исполнители:*\n` +
-//       results.join('\n');
+    const summary =
+      `✅ *Задача создана*\n` +
+      `📝 *${escapeMarkdown(text)}*\n` +
+      `⏳ (${formatTimeLeft(deadline)} осталось)\n\n` +
+      `👥 *Исполнители:*\n` +
+      results.join('\n');
 
-//     await ctx.reply(summary, { parse_mode: 'Markdown' });
+    await ctx.reply(summary, { parse_mode: 'Markdown' });
 
-//   } catch (e) {
-//     console.error('Неожиданная ошибка в команде addtask:', e);
-//     ctx.reply('❌ Произошла неожиданная ошибка при создании задачи.');
-//   }
-// });
+  } catch (e) {
+    console.error('Неожиданная ошибка в команде addtask:', e);
+    ctx.reply('❌ Произошла неожиданная ошибка при создании задачи.');
+  }
+});
 
-// // Утилита для экранирования Markdown-символов
+// Утилита для экранирования Markdown-символов
 
 
 
  
 
-// function formatTimeLeft3(ms) {
-//   if (ms <= 0) return 'время вышло';
+function formatTimeLeft3(ms) {
+  if (ms <= 0) return 'время вышло';
 
-//   const minutes = Math.floor(ms / 60000) % 60;
-//   const hours = Math.floor(ms / (1000 * 60 * 60)) % 24;
-//   const days = Math.floor(ms / (1000 * 60 * 60 * 24));
+  const minutes = Math.floor(ms / 60000) % 60;
+  const hours = Math.floor(ms / (1000 * 60 * 60)) % 24;
+  const days = Math.floor(ms / (1000 * 60 * 60 * 24));
 
-//   const parts = [];
-//   if (days > 0) parts.push(`${days} дн.`);
-//   if (hours > 0) parts.push(`${hours} ч.`);
-//   if (minutes > 0) parts.push(`${minutes} мин.`);
+  const parts = [];
+  if (days > 0) parts.push(`${days} дн.`);
+  if (hours > 0) parts.push(`${hours} ч.`);
+  if (minutes > 0) parts.push(`${minutes} мин.`);
 
-//   return parts.join(' ') || 'меньше минуты';
-// }
-// // Обработка кнопок Выполнить и Отменить
-// bot.on('callback_query', async (ctx) => {
-//   try {
-//     const data = ctx.callbackQuery.data;
-//     const fromId = String(ctx.from.id);
+  return parts.join(' ') || 'меньше минуты';
+}
+// Обработка кнопок Выполнить и Отменить
+bot.on('callback_query', async (ctx) => {
+  try {
+    const data = ctx.callbackQuery.data;
+    const fromId = String(ctx.from.id);
 
-//     if (data.startsWith('done_')) {
-//       // Исполнитель нажал "Выполнить"
-//       const taskId = data.split('_')[1];
+    if (data.startsWith('done_')) {
+      // Исполнитель нажал "Выполнить"
+      const taskId = data.split('_')[1];
 
-//       const task = await prisma.taskBot.findUnique({
-//         where: { id: taskId },
-//         include: { taskExecutors: true },
-//       });
-//       if (!task) return ctx.answerCbQuery('Задача не найдена.');
+      const task = await prisma.taskBot.findUnique({
+        where: { id: taskId },
+        include: { taskExecutors: true },
+      });
+      if (!task) return ctx.answerCbQuery('Задача не найдена.');
 
-//       if (task.status !== 'IN_PROGRESS') {
-//         return ctx.answerCbQuery('Задача уже не в работе.', { show_alert: true });
-//       }
+      if (task.status !== 'IN_PROGRESS') {
+        return ctx.answerCbQuery('Задача уже не в работе.', { show_alert: true });
+      }
 
-//       const user = await prisma.userBot.findFirst({ where: { tgId: fromId } });
-//       if (!user) return ctx.answerCbQuery('Вы не зарегистрированы.');
+      const user = await prisma.userBot.findFirst({ where: { tgId: fromId } });
+      if (!user) return ctx.answerCbQuery('Вы не зарегистрированы.');
 
-//       const isExecutor = task.taskExecutors.some(e => e.userId === user.id);
-//       if (!isExecutor) return ctx.answerCbQuery('Вы не участник этой задачи.');
+      const isExecutor = task.taskExecutors.some(e => e.userId === user.id);
+      if (!isExecutor) return ctx.answerCbQuery('Вы не участник этой задачи.');
 
-//       // Кнопки для админов
-//       const adminButtons = [
-//         [
-//           { text: '✅ Подтвердить выполнение', callback_data: `admin_confirm_${task.id}_${fromId}` },
-//           { text: '❌ Отказать', callback_data: `admin_reject_${task.id}_${fromId}` }
-//         ],
-//         [
-//           { text: '↩️ Вернуть в работу', callback_data: `admin_reopen_${task.id}_${fromId}` }
-//         ]
-//       ];
+      // Кнопки для админов
+      const adminButtons = [
+        [
+          { text: '✅ Подтвердить выполнение', callback_data: `admin_confirm_${task.id}_${fromId}` },
+          { text: '❌ Отказать', callback_data: `admin_reject_${task.id}_${fromId}` }
+        ],
+        [
+          { text: '↩️ Вернуть в работу', callback_data: `admin_reopen_${task.id}_${fromId}` }
+        ]
+      ];
 
-//       // Отправляем всем админам
-//       for (const adminId of ADMIN_IDS) {
-//         try {
-//           await ctx.telegram.sendMessage(
-//             adminId,
-//             `Пользователь @${user.username || user.tgId} хочет отметить задачу выполненной:\n\n${task.text}`,
-//             { reply_markup: { inline_keyboard: adminButtons } }
-//           );
-//         } catch (e) {
-//           console.error(`Ошибка отправки администратору ${adminId}:`, e);
-//         }
-//       }
+      // Отправляем всем админам
+      for (const adminId of ADMIN_IDS) {
+        try {
+          await ctx.telegram.sendMessage(
+            adminId,
+            `Пользователь @${user.username || user.tgId} хочет отметить задачу выполненной:\n\n${task.text}`,
+            { reply_markup: { inline_keyboard: adminButtons } }
+          );
+        } catch (e) {
+          console.error(`Ошибка отправки администратору ${adminId}:`, e);
+        }
+      }
 
-//       await ctx.answerCbQuery('Запрос на выполнение отправлен администраторам.');
-//       return;
-//     }
+      await ctx.answerCbQuery('Запрос на выполнение отправлен администраторам.');
+      return;
+    }
 
-//     if (data.startsWith('admin_confirm_') || data.startsWith('admin_reject_') || data.startsWith('admin_reopen_')) {
-//       const [prefix, action, taskId, executorTgId] = data.split('_');
+    if (data.startsWith('admin_confirm_') || data.startsWith('admin_reject_') || data.startsWith('admin_reopen_')) {
+      const [prefix, action, taskId, executorTgId] = data.split('_');
 
-//       if (!ADMIN_IDS.includes(fromId)) {
-//         return ctx.answerCbQuery('Эти кнопки доступны только администраторам.', { show_alert: true });
-//       }
+      if (!ADMIN_IDS.includes(fromId)) {
+        return ctx.answerCbQuery('Эти кнопки доступны только администраторам.', { show_alert: true });
+      }
 
-//       const task = await prisma.taskBot.findUnique({ where: { id: taskId } });
-//       if (!task) return ctx.answerCbQuery('Задача не найдена.');
+      const task = await prisma.taskBot.findUnique({ where: { id: taskId } });
+      if (!task) return ctx.answerCbQuery('Задача не найдена.');
 
-//       if (action === 'confirm') {
-//         await prisma.taskBot.update({
-//           where: { id: taskId },
-//           data: { status: 'COMPLETED' },
-//         });
+      if (action === 'confirm') {
+        await prisma.taskBot.update({
+          where: { id: taskId },
+          data: { status: 'COMPLETED' },
+        });
 
-//         await ctx.editMessageText(`Задача *выполнена* и подтверждена администратором.`, { parse_mode: 'Markdown' });
-//         await ctx.answerCbQuery('Вы подтвердили выполнение.');
+        await ctx.editMessageText(`Задача *выполнена* и подтверждена администратором.`, { parse_mode: 'Markdown' });
+        await ctx.answerCbQuery('Вы подтвердили выполнение.');
 
-//         // Можно уведомить исполнителя:
-//         try {
-//           await ctx.telegram.sendMessage(executorTgId, `Ваша задача "${task.text}" подтверждена и отмечена выполненной ✅.`);
-//         } catch {}
-//       } else if (action === 'reject') {
-//         await prisma.taskBot.update({
-//           where: { id: taskId },
-//           data: { status: 'CANCELLED' },
-//         });
+        // Можно уведомить исполнителя:
+        try {
+          await ctx.telegram.sendMessage(executorTgId, `Ваша задача "${task.text}" подтверждена и отмечена выполненной ✅.`);
+        } catch {}
+      } else if (action === 'reject') {
+        await prisma.taskBot.update({
+          where: { id: taskId },
+          data: { status: 'CANCELLED' },
+        });
 
-//         await ctx.editMessageText(`Задача *отклонена* администратором и отменена.`, { parse_mode: 'Markdown' });
-//         await ctx.answerCbQuery('Вы отклонили выполнение.');
+        await ctx.editMessageText(`Задача *отклонена* администратором и отменена.`, { parse_mode: 'Markdown' });
+        await ctx.answerCbQuery('Вы отклонили выполнение.');
 
-//         // Уведомляем исполнителя
-//         try {
-//           await ctx.telegram.sendMessage(executorTgId, `К сожалению, ваша задача "${task.text}" была отклонена администратором и отменена ❌.`);
-//         } catch {}
-//       } else if (action === 'reopen') {
-//         await prisma.taskBot.update({
-//           where: { id: taskId },
-//           data: { status: 'IN_PROGRESS' },
-//         });
+        // Уведомляем исполнителя
+        try {
+          await ctx.telegram.sendMessage(executorTgId, `К сожалению, ваша задача "${task.text}" была отклонена администратором и отменена ❌.`);
+        } catch {}
+      } else if (action === 'reopen') {
+        await prisma.taskBot.update({
+          where: { id: taskId },
+          data: { status: 'IN_PROGRESS' },
+        });
 
-//         await ctx.editMessageText(`Задача возвращена в работу администратором.`, { parse_mode: 'Markdown' });
-//         await ctx.answerCbQuery('Вы вернули задачу в работу.');
+        await ctx.editMessageText(`Задача возвращена в работу администратором.`, { parse_mode: 'Markdown' });
+        await ctx.answerCbQuery('Вы вернули задачу в работу.');
 
-//         // Уведомить исполнителя
-//         try {
-//           await ctx.telegram.sendMessage(executorTgId, `Ваша задача "${task.text}" возвращена в работу администратором.`);
-//         } catch {}
-//       } else {
-//         return ctx.answerCbQuery('Неизвестное действие.');
-//       }
+        // Уведомить исполнителя
+        try {
+          await ctx.telegram.sendMessage(executorTgId, `Ваша задача "${task.text}" возвращена в работу администратором.`);
+        } catch {}
+      } else {
+        return ctx.answerCbQuery('Неизвестное действие.');
+      }
 
-//       return;
-//     }
+      return;
+    }
 
-//     // Если пришла неизвестная команда
-//     return ctx.answerCbQuery('Неизвестная команда.');
-//   } catch (error) {
-//     console.error('Ошибка в callback_query:', error);
-//     return ctx.answerCbQuery('Произошла ошибка.');
-//   }
-// });
+    // Если пришла неизвестная команда
+    return ctx.answerCbQuery('Неизвестная команда.');
+  } catch (error) {
+    console.error('Ошибка в callback_query:', error);
+    return ctx.answerCbQuery('Произошла ошибка.');
+  }
+});
 
 
 
-// // Команда просмотра своих задач
-// bot.command('mytasks', async (ctx) => {
-//   try {
-//     const fromId = String(ctx.from.id);
-//     const fromUsername = ctx.from.username || null;
-//     const fromName = ctx.from.first_name || null;
+// Команда просмотра своих задач
+bot.command('mytasks', async (ctx) => {
+  try {
+    const fromId = String(ctx.from.id);
+    const fromUsername = ctx.from.username || null;
+    const fromName = ctx.from.first_name || null;
 
-//     let user = await prisma.userBot.findUnique({
-//       where: { tgId: fromId },
-//       include: {
-//         taskExecutors: {
-//           where: { task: { status: 'IN_PROGRESS' } },
-//           include: { task: true },
-//         },
-//       },
-//     });
+    let user = await prisma.userBot.findUnique({
+      where: { tgId: fromId },
+      include: {
+        taskExecutors: {
+          where: { task: { status: 'IN_PROGRESS' } },
+          include: { task: true },
+        },
+      },
+    });
 
-//     // Если не нашли по tgId — ищем по username
-//     if (!user && fromUsername) {
-//       const existingByUsername = await prisma.userBot.findUnique({
-//         where: { username: fromUsername },
-//       });
+    // Если не нашли по tgId — ищем по username
+    if (!user && fromUsername) {
+      const existingByUsername = await prisma.userBot.findUnique({
+        where: { username: fromUsername },
+      });
 
-//       if (existingByUsername) {
-//         // Обновляем tgId
-//         user = await prisma.userBot.update({
-//           where: { username: fromUsername },
-//           data: { tgId: fromId },
-//           include: {
-//             taskExecutors: {
-//               where: { task: { status: 'IN_PROGRESS' } },
-//               include: { task: true },
-//             },
-//           },
-//         });
-//       }
-//     }
+      if (existingByUsername) {
+        // Обновляем tgId
+        user = await prisma.userBot.update({
+          where: { username: fromUsername },
+          data: { tgId: fromId },
+          include: {
+            taskExecutors: {
+              where: { task: { status: 'IN_PROGRESS' } },
+              include: { task: true },
+            },
+          },
+        });
+      }
+    }
 
-//     // Если всё равно не найден — создаём нового
-//     if (!user) {
-//       user = await prisma.userBot.create({
-//         data: {
-//           tgId: fromId,
-//           username: fromUsername,
-//           name: fromName,
-//         },
-//         include: {
-//           taskExecutors: {
-//             where: { task: { status: 'IN_PROGRESS' } },
-//             include: { task: true },
-//           },
-//         },
-//       });
-//       console.log(`✅ Зарегистрирован новый пользователь с tgId=${fromId}`);
-//     }
+    // Если всё равно не найден — создаём нового
+    if (!user) {
+      user = await prisma.userBot.create({
+        data: {
+          tgId: fromId,
+          username: fromUsername,
+          name: fromName,
+        },
+        include: {
+          taskExecutors: {
+            where: { task: { status: 'IN_PROGRESS' } },
+            include: { task: true },
+          },
+        },
+      });
+      console.log(`✅ Зарегистрирован новый пользователь с tgId=${fromId}`);
+    }
 
-//     if (!user.taskExecutors || user.taskExecutors.length === 0) {
-//       return ctx.reply('🗂 У вас нет активных задач.');
-//     }
+    if (!user.taskExecutors || user.taskExecutors.length === 0) {
+      return ctx.reply('🗂 У вас нет активных задач.');
+    }
     
 
-//     for (const te of user.taskExecutors) {
-//       const task = te.task;
-//         const timeLeftMs = new Date(task.deadline).getTime() - Date.now();
-//   const timeLeftFormatted = formatTimeLeft2(timeLeftMs);
-//       await ctx.reply(
-//           `📝 *${task.text}*\n⏳ Осталось: ${timeLeftFormatted}`,
-//         {
-//           parse_mode: 'Markdown',
-//           reply_markup: {
-//             inline_keyboard: [
-//               [
-//                 { text: '✅ Выполнить', callback_data: `done_${task.id}` },
-//                 { text: '❌ Отменить', callback_data: `cancel_${task.id}` },
-//               ],
-//             ],
-//           },
-//         }
-//       );
-//     }
-//   } catch (error) {
-//     console.error('Ошибка в mytasks:', error);
-//     ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
-//   }
-// });
+    for (const te of user.taskExecutors) {
+      const task = te.task;
+        const timeLeftMs = new Date(task.deadline).getTime() - Date.now();
+  const timeLeftFormatted = formatTimeLeft2(timeLeftMs);
+      await ctx.reply(
+          `📝 *${task.text}*\n⏳ Осталось: ${timeLeftFormatted}`,
+        {
+          parse_mode: 'Markdown',
+          reply_markup: {
+            inline_keyboard: [
+              [
+                { text: '✅ Выполнить', callback_data: `done_${task.id}` },
+                { text: '❌ Отменить', callback_data: `cancel_${task.id}` },
+              ],
+            ],
+          },
+        }
+      );
+    }
+  } catch (error) {
+    console.error('Ошибка в mytasks:', error);
+    ctx.reply(`❌ Ошибка при получении задач:\n${error.message || error}`);
+  }
+});
 
-// function escapeMarkdownV3(text) {
-//   if (!text) return '';
-//   // Сначала экранируем обратный слеш, затем все спецсимволы Telegram MarkdownV2, включая точку
-//   return text
-//     .replace(/\\/g, '\\\\')
-//     .replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
-// }
+function escapeMarkdownV3(text) {
+  if (!text) return '';
+  // Сначала экранируем обратный слеш, затем все спецсимволы Telegram MarkdownV2, включая точку
+  return text
+    .replace(/\\/g, '\\\\')
+    .replace(/([_*[\]()~`>#+\-=|{}.!])/g, '\\$1');
+}
 
-// bot.command('stats', async (ctx) => {
-//   try {
-//     const totalTasks = await prisma.taskBot.count();
-//     const completedTasks = await prisma.taskBot.count({ where: { status: 'COMPLETED' } });
-//     const inProgressTasks = await prisma.taskBot.count({ where: { status: 'IN_PROGRESS' } });
-//     const failedTasks = await prisma.taskBot.count({ where: { status: 'FAILED' } });
+bot.command('stats', async (ctx) => {
+  try {
+    const totalTasks = await prisma.taskBot.count();
+    const completedTasks = await prisma.taskBot.count({ where: { status: 'COMPLETED' } });
+    const inProgressTasks = await prisma.taskBot.count({ where: { status: 'IN_PROGRESS' } });
+    const failedTasks = await prisma.taskBot.count({ where: { status: 'FAILED' } });
 
-//     // Лидерборд — по выполненным задачам
-//     const leaderboard = await prisma.taskExecutor.groupBy({
-//       by: ['userId'],
-//       where: { task: { status: 'COMPLETED' } },
-//       _count: { taskId: true },
-//       orderBy: { _count: { taskId: 'desc' } },
-//       take: 5,
-//     });
+    // Лидерборд — по выполненным задачам
+    const leaderboard = await prisma.taskExecutor.groupBy({
+      by: ['userId'],
+      where: { task: { status: 'COMPLETED' } },
+      _count: { taskId: true },
+      orderBy: { _count: { taskId: 'desc' } },
+      take: 5,
+    });
 
-//     // Найдём пользователей, у которых есть проваленные задачи
-//     const failedExecutors = await prisma.taskExecutor.findMany({
-//       where: { task: { status: 'FAILED' } },
-//       distinct: ['userId'], // уникальные по userId
-//       include: { user: true },
-//     });
+    // Найдём пользователей, у которых есть проваленные задачи
+    const failedExecutors = await prisma.taskExecutor.findMany({
+      where: { task: { status: 'FAILED' } },
+      distinct: ['userId'], // уникальные по userId
+      include: { user: true },
+    });
 
-//     // Массив userId тех, кто в лидерах (выполнили задачи)
-//     const leaderUserIds = leaderboard.map(l => l.userId);
+    // Массив userId тех, кто в лидерах (выполнили задачи)
+    const leaderUserIds = leaderboard.map(l => l.userId);
 
-//     // Все пользователи
-//     const allUsers = await prisma.userBot.findMany();
-//     const usersById = new Map(allUsers.map(u => [u.id, u]));
+    // Все пользователи
+    const allUsers = await prisma.userBot.findMany();
+    const usersById = new Map(allUsers.map(u => [u.id, u]));
 
-//     // Пользователи без выполненных задач (т.е. slackers по completed)
-//     const slackers = allUsers.filter(u => !leaderUserIds.includes(u.id));
+    // Пользователи без выполненных задач (т.е. slackers по completed)
+    const slackers = allUsers.filter(u => !leaderUserIds.includes(u.id));
 
-//     // Список "раздолбаев" — те, у кого есть FAILED задачи
-//     const failedUserIds = new Set(failedExecutors.map(fe => fe.userId));
-//     // Уникальные пользователи с проваленными задачами
-//     const failedUsers = Array.from(failedUserIds).map(id => usersById.get(id)).filter(Boolean);
+    // Список "раздолбаев" — те, у кого есть FAILED задачи
+    const failedUserIds = new Set(failedExecutors.map(fe => fe.userId));
+    // Уникальные пользователи с проваленными задачами
+    const failedUsers = Array.from(failedUserIds).map(id => usersById.get(id)).filter(Boolean);
 
-//     // Формируем текст для лидеров
-//     const leadersText = leaderboard.map((l, i) => {
-//       const user = usersById.get(l.userId);
-//       const displayNameRaw = user?.username || user?.name || 'Неизвестный';
-//       const displayName = displayNameRaw.trim();
-//       const escapedName = escapeMarkdownV3(displayName);
-//       if (user?.tgId) {
-//         return `${i + 1}\\. [${escapedName}](tg://user?id=${user.tgId}) — выполнено задач: ${l._count.taskId}`;
-//       } else {
-//         return `${i + 1}\\. @${escapedName} — выполнено задач: ${l._count.taskId}`;
-//       }
-//     }).join('\n') || 'Пока нет выполненных задач.';
+    // Формируем текст для лидеров
+    const leadersText = leaderboard.map((l, i) => {
+      const user = usersById.get(l.userId);
+      const displayNameRaw = user?.username || user?.name || 'Неизвестный';
+      const displayName = displayNameRaw.trim();
+      const escapedName = escapeMarkdownV3(displayName);
+      if (user?.tgId) {
+        return `${i + 1}\\. [${escapedName}](tg://user?id=${user.tgId}) — выполнено задач: ${l._count.taskId}`;
+      } else {
+        return `${i + 1}\\. @${escapedName} — выполнено задач: ${l._count.taskId}`;
+      }
+    }).join('\n') || 'Пока нет выполненных задач.';
 
-//     // Формируем текст для slackers (без выполненных задач)
-//     const slackersText = slackers.length > 0
-//       ? slackers.slice(0, 10).map((u, i) => {
-//           const displayNameRaw = u.username || u.name || 'Неизвестный';
-//           const displayName = displayNameRaw.trim();
-//           const escapedName = escapeMarkdownV3(displayName);
-//           if (u.tgId) {
-//             return `${i + 1}\\. [${escapedName}](tg://user?id=${u.tgId})`;
-//           } else {
-//             return `${i + 1}\\. @${escapedName}`;
-//           }
-//         }).join('\n')
-//       : 'Все пользователи выполнили хотя бы одну задачу!';
+    // Формируем текст для slackers (без выполненных задач)
+    const slackersText = slackers.length > 0
+      ? slackers.slice(0, 10).map((u, i) => {
+          const displayNameRaw = u.username || u.name || 'Неизвестный';
+          const displayName = displayNameRaw.trim();
+          const escapedName = escapeMarkdownV3(displayName);
+          if (u.tgId) {
+            return `${i + 1}\\. [${escapedName}](tg://user?id=${u.tgId})`;
+          } else {
+            return `${i + 1}\\. @${escapedName}`;
+          }
+        }).join('\n')
+      : 'Все пользователи выполнили хотя бы одну задачу!';
 
-//     // Формируем текст для раздолбаев с проваленными задачами
-//     const failedText = failedUsers.length > 0
-//       ? failedUsers.slice(0, 10).map((u, i) => {
-//           const displayNameRaw = u.username || u.name || 'Неизвестный';
-//           const displayName = displayNameRaw.trim();
-//           const escapedName = escapeMarkdownV3(displayName);
-//           if (u.tgId) {
-//             return `${i + 1}\\. [${escapedName}](tg://user?id=${u.tgId})`;
-//           } else {
-//             return `${i + 1}\\. @${escapedName}`;
-//           }
-//         }).join('\n')
-//       : 'Пока никто не провалил задачи!';
+    // Формируем текст для раздолбаев с проваленными задачами
+    const failedText = failedUsers.length > 0
+      ? failedUsers.slice(0, 10).map((u, i) => {
+          const displayNameRaw = u.username || u.name || 'Неизвестный';
+          const displayName = displayNameRaw.trim();
+          const escapedName = escapeMarkdownV3(displayName);
+          if (u.tgId) {
+            return `${i + 1}\\. [${escapedName}](tg://user?id=${u.tgId})`;
+          } else {
+            return `${i + 1}\\. @${escapedName}`;
+          }
+        }).join('\n')
+      : 'Пока никто не провалил задачи!';
 
-//     const msg =
-//       `📊 *Статистика TaskBattle:*\n` +
-//       `Всего задач: *${totalTasks}*\n` +
-//       `Выполнено: *${completedTasks}*\n` +
-//       `В работе: *${inProgressTasks}*\n` +
-//       `Провалено: *${failedTasks}*\n\n` +
-//       `🏆 *Топ исполнителей по выполненным задачам:*\n${leadersText}\n\n` +
-//       `⚠️ *Пользователи без выполненных задач:*\n${slackersText}\n\n` +
-//       `💀 *Пользователи с проваленными задачами:*\n${failedText}`;
+    const msg =
+      `📊 *Статистика TaskBattle:*\n` +
+      `Всего задач: *${totalTasks}*\n` +
+      `Выполнено: *${completedTasks}*\n` +
+      `В работе: *${inProgressTasks}*\n` +
+      `Провалено: *${failedTasks}*\n\n` +
+      `🏆 *Топ исполнителей по выполненным задачам:*\n${leadersText}\n\n` +
+      `⚠️ *Пользователи без выполненных задач:*\n${slackersText}\n\n` +
+      `💀 *Пользователи с проваленными задачами:*\n${failedText}`;
 
-//     await ctx.reply(msg, { parse_mode: 'MarkdownV2' });
-//   } catch (error) {
-//     console.error('Ошибка в команде stats:', error);
-//     ctx.reply('❌ Произошла ошибка при получении статистики.');
-//   }
-// });
-
-
+    await ctx.reply(msg, { parse_mode: 'MarkdownV2' });
+  } catch (error) {
+    console.error('Ошибка в команде stats:', error);
+    ctx.reply('❌ Произошла ошибка при получении статистики.');
+  }
+});
 
 
 
 
 
-// function escapeMarkdownV2(text) {
-//   // Экранирует спецсимволы Telegram MarkdownV2: _ * [ ] ( ) ~ ` > # + - = | { } . !
-//   return text.replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1');
-// }
 
 
-// function formatTimeLeft2(ms) {
-//   if (ms <= 0) return '0 мин.';
-//   const totalMinutes = Math.floor(ms / 60000);
-//   const hours = Math.floor(totalMinutes / 60);
-//   const minutes = totalMinutes % 60;
-
-//   let result = '';
-//   if (hours > 0) {
-//     result += `${hours} ч\\.`;  // точку экранируем вручную
-//   }
-//   if (minutes > 0) {
-//     if (result.length) result += ' ';
-//     result += `${minutes} мин\\.`;  // и здесь тоже
-//   }
-//   return result;
-// }
+function escapeMarkdownV2(text) {
+  // Экранирует спецсимволы Telegram MarkdownV2: _ * [ ] ( ) ~ ` > # + - = | { } . !
+  return text.replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1');
+}
 
 
+function formatTimeLeft2(ms) {
+  if (ms <= 0) return '0 мин.';
+  const totalMinutes = Math.floor(ms / 60000);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
 
-// function escapeMarkdownalltask(text) {
-//   if (!text) return '';
-//   return text
-//     .replace(/\\/g, '\\\\')     // Экранируем обратный слэш первым
-//     .replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1'); // Экранируем спецсимволы, включая точку
-// }
-
-// bot.command('alltasks', async (ctx) => {
-//   const fromId = String(ctx.from.id);
-//   if (!ADMIN_IDS.includes(fromId)) {
-//     return ctx.reply('⛔ Только админы могут просматривать все задачи.');
-//   }
-
-//   try {
-//     const tasks = await prisma.taskBot.findMany({
-//       where: { status: 'IN_PROGRESS' },
-//       include: {
-//         taskExecutors: {
-//           include: { user: true },
-//         },
-//         creator: true,
-//       },
-//       orderBy: { createdAt: 'desc' },
-//     });
-
-//     if (tasks.length === 0) {
-//       return ctx.reply('📂 Активных задач нет.');
-//     }
-
-//     for (const task of tasks) {
-//       const now = Date.now();
-//       const timeLeftMs = new Date(task.deadline).getTime() - now;
-//       const timeLeftFormatted = escapeMarkdownalltask(formatTimeLeft2(timeLeftMs));
+  let result = '';
+  if (hours > 0) {
+    result += `${hours} ч\\.`;  // точку экранируем вручную
+  }
+  if (minutes > 0) {
+    if (result.length) result += ' ';
+    result += `${minutes} мин\\.`;  // и здесь тоже
+  }
+  return result;
+}
 
 
-//       const executors = task.taskExecutors
-//         .map(e => {
-//           const name = escapeMarkdownalltask(e.user.name || e.user.username || String(e.user.tgId) || 'Без имени');
-//           return `• ${name}`;
-//         })
-//         .join('\n');
 
-//       const creatorName = escapeMarkdownalltask(task.creator.name || task.creator.username || String(task.creator.tgId) || 'Без имени');
-//       const taskText = escapeMarkdownalltask(task.text);
+function escapeMarkdownalltask(text) {
+  if (!text) return '';
+  return text
+    .replace(/\\/g, '\\\\')     // Экранируем обратный слэш первым
+    .replace(/([_\*\[\]\(\)~`>#+\-=|{}\.!])/g, '\\$1'); // Экранируем спецсимволы, включая точку
+}
 
-//       await ctx.reply(
-//         `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ Осталось: ${timeLeftFormatted}\n\n🧑‍💻 Исполнители:\n${executors}`,
-//         { parse_mode: 'MarkdownV2' }
-//       );
-//     }
-//   } catch (err) {
-//     console.error('Ошибка в alltasks:', err);
-//     return ctx.reply('❌ Ошибка при получении задач.');
-//   }
-// });
+bot.command('alltasks', async (ctx) => {
+  const fromId = String(ctx.from.id);
+  if (!ADMIN_IDS.includes(fromId)) {
+    return ctx.reply('⛔ Только админы могут просматривать все задачи.');
+  }
+
+  try {
+    const tasks = await prisma.taskBot.findMany({
+      where: { status: 'IN_PROGRESS' },
+      include: {
+        taskExecutors: {
+          include: { user: true },
+        },
+        creator: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    if (tasks.length === 0) {
+      return ctx.reply('📂 Активных задач нет.');
+    }
+
+    for (const task of tasks) {
+      const now = Date.now();
+      const timeLeftMs = new Date(task.deadline).getTime() - now;
+      const timeLeftFormatted = escapeMarkdownalltask(formatTimeLeft2(timeLeftMs));
+
+
+      const executors = task.taskExecutors
+        .map(e => {
+          const name = escapeMarkdownalltask(e.user.name || e.user.username || String(e.user.tgId) || 'Без имени');
+          return `• ${name}`;
+        })
+        .join('\n');
+
+      const creatorName = escapeMarkdownalltask(task.creator.name || task.creator.username || String(task.creator.tgId) || 'Без имени');
+      const taskText = escapeMarkdownalltask(task.text);
+
+      await ctx.reply(
+        `📝 *${taskText}*\n👤 Создатель: ${creatorName}\n⏳ Осталось: ${timeLeftFormatted}\n\n🧑‍💻 Исполнители:\n${executors}`,
+        { parse_mode: 'MarkdownV2' }
+      );
+    }
+  } catch (err) {
+    console.error('Ошибка в alltasks:', err);
+    return ctx.reply('❌ Ошибка при получении задач.');
+  }
+});
 
 
 
