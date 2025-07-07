@@ -20,6 +20,7 @@ bot.start(async (ctx) => {
   );
 });
 
+
 // Обработка ошибок
 bot.catch((err, ctx) => {
   console.error('Ошибка в боте:', err);
