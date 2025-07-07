@@ -4,7 +4,12 @@ import { SendMessage, SendTaskRequest } from "../../bot/handlers.js";
 import {parseInitData} from '../../utils/getuserid.js'
 const prisma = new PrismaClient();
 
-import { redis } from "../redis.js";
+import Redis from 'ioredis'
+
+ const redis = new Redis(process.env.REDIS_URL); // автоматически использует TLS и авторизацию
+
+
+
 // export const Search = async (req,res)=> {
 //   const { username } = req.body || {};
 // if(!username) {

@@ -5,7 +5,12 @@ import { subDays, subWeeks, subMonths, format, startOfDay } from "date-fns";
 import { parseInitData } from "../../utils/getuserid.js";
 const prisma = new PrismaClient();
 
-import { redis } from "../redis.js";
+import Redis from 'ioredis'
+
+export const redis = new Redis(process.env.REDIS_URL); // автоматически использует TLS и авторизацию
+
+
+
 export const Friends = async (req, res) => {
   const initData = req.headers['tg-init-data'];
 
