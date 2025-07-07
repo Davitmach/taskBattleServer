@@ -788,7 +788,7 @@ export const Welcome = async (req, res) => {
     },
   });
 if(user) {
-   redis.set(`user:${user.id}:online`, "true", 'EX', 65);
+   redis.set(`user:${user.id}:online`, "true", 'EX', 10);
 }
   if (!user) {
     await prisma.user.create({
@@ -799,7 +799,7 @@ if(user) {
         chatId: String(chatId),
       },
     });
-    redis.set(`user:${user.id}:online`, "true", 'EX', 65);
+    redis.set(`user:${user.id}:online`, "true", 'EX', 10);
     return res.status(404).json({ status: "unauthorized" });
   }
 
