@@ -52,9 +52,38 @@ export const SendFriendRequest = async (receiverChatId, friendRequestId,name) =>
     console.error("Ошибка при отправке инвайта:", err);
   }
 };
+export const SendTaskRequest = async(receiverChatId,taskParticipantId,userName,taskName)=> {
+    try {
+    const user = await prisma.user.findFirst({
+      where: { chatId: String(receiverChatId) },
+      select: { id: true ,initData:true},
+    });
+
+    if (!user) {
+      console.log(`Пользователь с chatId ${receiverChatId} не найден.`);
+      return;
+    }
+
+    await bot.telegram.sendMessage(receiverChatId, `👤 ${userName} добавил вас в таск ${taskName}. Принять запрос?`, {
+      reply_markup: {
+        inline_keyboard: [
+          [
+            { text: "✅ Принять", callback_data: `accept_task_${taskParticipantId}|${user.initData}` },
+            { text: "❌ Отклонить", callback_data: `reject_task_${taskParticipantId}|${user.initData}` }
+          ]
+        ]
+      }
+    });
+
+  } catch (err) {
+    console.error("Ошибка при отправке инвайта:", err);
+  }
+}
 bot.on('callback_query', async (ctx) => {
   const data = ctx.callbackQuery.data;
   const chatId = ctx.chat?.id;
+
+console.log(data,'qaq');
 
   if (!data) return await ctx.answerCbQuery("Нет данных");
 
@@ -74,7 +103,7 @@ const check = await prisma.userFriend.findMany({
   }
 })
 if(check.length>0) {
-  const add = await fetch(`https://taskbattleserver.onrender.com/api/user/friend/accept/${friendId}`, {
+  const add = await fetch(`http://localhost:3001/api/user/friend/accept/${friendId}`, {
   method: 'GET', 
   headers: {
     'tg-init-data': initData
@@ -102,7 +131,7 @@ const check = await prisma.userFriend.findMany({
   }
 })
 if(check.length>0) {
-   const rej = await fetch(`https://taskbattleserver.onrender.com/api/user/friend/deleteOrCancel/${friendId}`,{
+   const rej = await fetch(`http://localhost:3001/api/user/friend/deleteOrCancel/${friendId}`,{
  method: 'GET', 
   headers: {
     'tg-init-data': initData
@@ -118,7 +147,72 @@ if(check.length>0) {
     await ctx.editMessageText("Не актуально... запрос был удален");
     await ctx.answerCbQuery();
   }
-  } else {
+  }
+  else if(data.startsWith('accept_task_')) {
+
+const taskRequestId = data.replace("accept_task_", "");
+const initData = data.split('|')[1]; 
+const friendId = taskRequestId.split('|')[0]; 
+const check = await prisma.taskParticipant.findMany({
+  where:{
+    id:friendId
+  }
+})
+if(check.length>0) {
+  const add = await fetch(`http://localhost:3001/api/task/accept/${friendId}`, {
+  method: 'GET', 
+  headers: {
+    'tg-init-data': initData
+  }
+});
+
+console.log(add);
+
+    await ctx.editMessageText("✅ Запрос в таск принят.");
+    await ctx.answerCbQuery();
+}
+else {
+   await ctx.editMessageText("Не актуально... запрос был удален");
+    await ctx.answerCbQuery();
+  }
+
+  }
+
+
+
+
+
+  else if(data.startsWith('reject_task_')) {
+const friendRequestId = data.replace("reject_task_", "");
+const initData = friendRequestId.split('|')[1];
+console.log(initData,'aqaqadedadea');
+
+const friendId = friendRequestId.split('|')[0];
+const check = await prisma.taskParticipant.findMany({
+  where:{
+    id:friendId
+  }
+})
+if(check.length>0) {
+   const rej = await fetch(`http://localhost:3001/api/task/reject/${friendId}`,{
+ method: 'GET', 
+  headers: {
+    'tg-init-data': initData
+  }
+    });
+
+    
+
+    await ctx.editMessageText("❌ Запрос в таск отклонён.");
+    await ctx.answerCbQuery();
+  }
+  else {
+    await ctx.editMessageText("Не актуально... запрос был удален");
+    await ctx.answerCbQuery();
+  }
+
+  }
+   else {
     await ctx.answerCbQuery("Неизвестная команда.");
   }
 });

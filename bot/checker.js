@@ -91,8 +91,7 @@ export async function checkTasksDeadlines() {
 }
 
 
-// 🔁 Проверять каждую минуту
 setInterval(checkTasksDeadlines, 60 * 1000);
 
-// ▶️ Первый запуск сразу
+
 checkTasksDeadlines();

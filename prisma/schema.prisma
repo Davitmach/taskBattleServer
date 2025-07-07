@@ -69,12 +69,16 @@ enum TaskType {
   SINGLE
   MULTI
 }
-
+enum ParticipantStatus {
+  ACCEPTED
+  PENDING
+}
 model TaskParticipant {
   id     String @id @default(cuid())
   taskId String
   userId String
-
+  ready Boolean @default(false)
+  status ParticipantStatus @default(PENDING)
   task Task @relation(fields: [taskId], references: [id])
   user User @relation(fields: [userId], references: [id])
 

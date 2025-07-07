@@ -40,7 +40,7 @@ export const Friends = async (req, res) => {
           id: true,
           name: true,
           icon: true,
-          _count: { select: { tasks: true } }
+          _count: { select: { tasks: true,taskParticipations:true } }
         }
       },
       friend: {        // Данные друга (когда userId == id)
@@ -48,7 +48,7 @@ export const Friends = async (req, res) => {
           id: true,
           name: true,
           icon: true,
-          _count: { select: { tasks: true } }
+          _count: { select: { tasks: true,taskParticipations:true } }
         }
       }
     }
@@ -82,9 +82,11 @@ const parsedUserId = parseInitData(initData)?.user?.id;
     select: {
       id: true,
       taskParticipations: {
+        where:{status:'ACCEPTED'},
         select: {
-          task: {
+          task: {    
             select: {
+        
               id: true,
               title: true,
               type: true,
@@ -92,9 +94,13 @@ const parsedUserId = parseInitData(initData)?.user?.id;
               timeout: true,
               endTime: true,
               participants: {
+                
                 select: {
+                  
                   user: {
-                    select: { id: true, name: true, icon: true },
+                    select: {
+                    
+                      id: true, name: true, icon: true },
                   },
                 },
               },
@@ -114,9 +120,20 @@ const parsedUserId = parseInitData(initData)?.user?.id;
           timeout: true,
           endTime: true,
           participants: {
+            where:{
+              status:"ACCEPTED"
+            },
             select: {
+              
               user: {
-                select: { id: true, name: true, icon: true },
+                
+                select: {
+                    _count:{
+                        select:{
+                          tasks:true,
+                          taskParticipations:true
+                        }
+                      }, id: true, name: true, icon: true },
               },
             },
           },
@@ -885,3 +902,73 @@ const parsedUserId = parseInitData(initData)?.user?.id;
     }
   });
 };
+export const AcceptTask =async (req, res)=> {
+const id = req.params.id;
+  const initData = req.headers['tg-init-data'];
+
+  if (!initData) {
+    return res.status(404).json({ status: 'initData is required' });
+  }
+
+  if (!id) {
+    return res.status(400).json({ status: 'Invalid Friend ID' });
+  }
+
+  const check = await prisma.taskParticipant.findFirst({
+    where: { id }
+  });
+
+  if (!check) {
+    return res.status(404).json({ status: 'Task not found' });
+  }
+
+  if (check.status === 'ACCEPTED') {
+    return res.status(400).json({ status: 'Task request already accepted' });
+  }
+
+  const accept = await prisma.taskParticipant.update({
+    where: { id },
+    data: { status: 'ACCEPTED' }
+  });
+const checkUser = await prisma.user.findFirst({
+  where:{id:check.userId}
+})
+SendMessage('Ваш запрос на добавление в таск был принят', checkUser.chatId);
+
+  return res.status(200).json({ status: 'success', data: accept });
+}
+export const RejectTask = async(req, res)=> {
+  const id = req.params.id;
+  const initData = req.headers['tg-init-data'];
+
+  if (!initData) {
+    return res.status(404).json({ status: 'initData is required' });
+  }
+
+  if (!id) {
+    return res.status(400).json({ status: 'Invalid Friend ID' });
+  }
+
+  const check = await prisma.taskParticipant.findFirst({
+    where: { id }
+  });
+
+  if (!check) {
+    return res.status(404).json({ status: 'Task not found' });
+  }
+
+  if (check.status === 'ACCEPTED') {
+    return res.status(400).json({ status: 'Task request already accepted' });
+  }
+
+  const accept = await prisma.taskParticipant.delete({
+    where: { id },
+
+  });
+const checkUser = await prisma.user.findFirst({
+  where:{id:check.userId}
+})
+SendMessage('Ваш запрос на добавление в таск был отказан', checkUser.chatId);
+
+  return res.status(200).json({ status: 'success', data: accept });
+}

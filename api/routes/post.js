@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { localISOStringWithZ } from "../../utils/localtime.js";
-import { SendMessage } from "../../bot/handlers.js";
+import { SendMessage, SendTaskRequest } from "../../bot/handlers.js";
 import {parseInitData} from '../../utils/getuserid.js'
 const prisma = new PrismaClient();
 
@@ -381,12 +381,13 @@ export const CreateTask = async (req, res) => {
         });
         SendMessage(`Тебя пригласили в задание: ${title}`, user.chatId);
 
-        await tx.taskParticipant.create({
+        const task = await tx.taskParticipant.create({
           data: {
             taskId,
             userId: friend,
           },
         });
+        SendTaskRequest(user.chatId,task.id,getUser.name,title);
       }
       res.status(200).json({
         status: "success",
@@ -726,23 +727,45 @@ export const Welcome = async (req, res) => {
         include: {
           user: true,
           participants: {
+          where:{
+            status:"ACCEPTED"
+          },
             include: {
+             
               user: {
-                select: { id: true, name: true, icon: true },
+               select: { 
+  id: true,
+  name: true,
+  icon: true,
+  _count: {
+    select: {
+      tasks: true,
+      taskParticipations: true,
+    },
+  },
+},
+
               },
             },
           },
         },
       },
       taskParticipations: {
+        where:{status:"ACCEPTED"},
+
         select: {
+          
           task: {
             include: {
               user: true,
               participants: {
+                where:{
+                  status:"ACCEPTED"
+                },
                 include: {
                   user: {
-                    select: { id: true, name: true, icon: true },
+                    select: { 
+                      id: true, name: true, icon: true },
                   },
                 },
               },
@@ -905,6 +928,10 @@ export const Welcome = async (req, res) => {
           id: p.user.id,
           name: p.user.name,
           icon: p.user.icon,
+          _count: {
+                        tasks: p.user._count.tasks,
+                        taskParticipations: p.user._count.taskParticipations
+                    },
         })),
       comment: generateTaskComment(task),
     };
