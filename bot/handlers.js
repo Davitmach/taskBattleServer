@@ -103,7 +103,7 @@ const check = await prisma.userFriend.findMany({
   }
 })
 if(check.length>0) {
-  const add = await fetch(`http://localhost:3001/api/user/friend/accept/${friendId}`, {
+  const add = await fetch(`https://taskbattleserver.onrender.com/api/user/friend/accept/${friendId}`, {
   method: 'GET', 
   headers: {
     'tg-init-data': initData
@@ -131,7 +131,7 @@ const check = await prisma.userFriend.findMany({
   }
 })
 if(check.length>0) {
-   const rej = await fetch(`http://localhost:3001/api/user/friend/deleteOrCancel/${friendId}`,{
+   const rej = await fetch(`https://taskbattleserver.onrender.com/api/user/friend/deleteOrCancel/${friendId}`,{
  method: 'GET', 
   headers: {
     'tg-init-data': initData
@@ -159,7 +159,7 @@ const check = await prisma.taskParticipant.findMany({
   }
 })
 if(check.length>0) {
-  const add = await fetch(`http://localhost:3001/api/task/accept/${friendId}`, {
+  const add = await fetch(`https://taskbattleserver.onrender.com/api/task/accept/${friendId}`, {
   method: 'GET', 
   headers: {
     'tg-init-data': initData
@@ -194,7 +194,7 @@ const check = await prisma.taskParticipant.findMany({
   }
 })
 if(check.length>0) {
-   const rej = await fetch(`http://localhost:3001/api/task/reject/${friendId}`,{
+   const rej = await fetch(`https://taskbattleserver.onrender.com/api/task/reject/${friendId}`,{
  method: 'GET', 
   headers: {
     'tg-init-data': initData
