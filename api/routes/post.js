@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 import Redis from 'ioredis'
 
- const redis = new Redis(process.env.REDIS_URL); // автоматически использует TLS и авторизацию
+ const redis = new Redis(process.env.REDIS_URL); 
 
 
 
