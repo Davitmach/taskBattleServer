@@ -791,7 +791,7 @@ if(user) {
    redis.set(`user:${user.id}:online`, "true", 'EX', 10);
 }
   if (!user) {
-    await prisma.user.create({
+  const user=  await prisma.user.create({
       data: {
         initData: String(parsedUserId),
         name: String(name),
