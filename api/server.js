@@ -2,7 +2,7 @@ import express from 'express';
 import {CreateTask, GetUsers, Report, Search, Welcome } from './routes/post.js';
 import cors from 'cors'
 import { AcceptTask, CancelTask, Chart, CompleteTask, DeleteOrCancelFriend, FriendAccept, FriendAdd, Friends, RejectTask, Tasks, Top, User } from './routes/get.js';
-
+import './redis.js';
 
 const app = express();
 app.use(cors({

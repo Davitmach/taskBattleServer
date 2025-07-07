@@ -4,6 +4,8 @@ import { localISOStringWithZ } from "../../utils/localtime.js";
 import { subDays, subWeeks, subMonths, format, startOfDay } from "date-fns";
 import { parseInitData } from "../../utils/getuserid.js";
 const prisma = new PrismaClient();
+
+import { redis } from "../redis.js";
 export const Friends = async (req, res) => {
   const initData = req.headers['tg-init-data'];
 
@@ -331,6 +333,8 @@ export const User = async (req, res) => {
   if (!user) {
     return res.status(404).json({ status: 'User not found' });
   }
+// Проверяем online-статус из Redis
+const isOnline = await redis.get(`user:${user.id}:online`);
 
   // Объединяем друзей
   const allFriends = [
@@ -457,7 +461,8 @@ const rewardsWithPercentage = userRewards.map(reward => {
     taskCounter,
     friend: friendStatus,
     friends: friendsWithTaskCounts,
-    rewards: rewardsWithPercentage
+    rewards: rewardsWithPercentage,
+     online: Boolean(isOnline)
   }
 });
 
