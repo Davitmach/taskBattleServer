@@ -439,15 +439,16 @@ else {
 }
 
 
+
 // export const Welcome = async (req, res) => {
 //   const { name, icon, chatId } = req.body || {};
 //   if (!name || !icon || !chatId) {
-//     return res.status(404).json({ status: 'name, chatid and icon are required' });
+//     return res.status(404).json({ status: "name, chatid and icon are required" });
 //   }
 
-//   const initData = req.headers['tg-init-data'];
+//   const initData = req.headers["tg-init-data"];
 //   if (!initData) {
-//     return res.status(404).json({ status: 'initData is required' });
+//     return res.status(404).json({ status: "initData is required" });
 //   }
 
 //   const parsedUserId = parseInitData(initData)?.user?.id;
@@ -465,23 +466,45 @@ else {
 //         include: {
 //           user: true,
 //           participants: {
+//           where:{
+//             status:"ACCEPTED"
+//           },
 //             include: {
+             
 //               user: {
-//                 select: { id: true, name: true, icon: true },
+//                select: { 
+//   id: true,
+//   name: true,
+//   icon: true,
+//   _count: {
+//     select: {
+//       tasks: true,
+//       taskParticipations: true,
+//     },
+//   },
+// },
+
 //               },
 //             },
 //           },
 //         },
 //       },
 //       taskParticipations: {
+//         where:{status:"ACCEPTED"},
+
 //         select: {
+          
 //           task: {
 //             include: {
 //               user: true,
 //               participants: {
+//                 where:{
+//                   status:"ACCEPTED"
+//                 },
 //                 include: {
 //                   user: {
-//                     select: { id: true, name: true, icon: true },
+//                     select: { 
+//                       id: true, name: true, icon: true },
 //                   },
 //                 },
 //               },
@@ -497,9 +520,11 @@ else {
 //       },
 //     },
 //   });
-
+// if(user) {
+//    redis.set(`user:${user.id}:online`, "true", 'EX', 10);
+// }
 //   if (!user) {
-//     await prisma.user.create({
+//   const user=  await prisma.user.create({
 //       data: {
 //         initData: String(parsedUserId),
 //         name: String(name),
@@ -507,7 +532,8 @@ else {
 //         chatId: String(chatId),
 //       },
 //     });
-//     return res.status(404).json({ status: 'unauthorized' });
+//     redis.set(`user:${user.id}:online`, "true", 'EX', 10);
+//     return res.status(404).json({ status: "unauthorized" });
 //   }
 
 //   const reports = await prisma.reports.findMany({
@@ -524,7 +550,7 @@ else {
 //       select: { id: true },
 //     });
 
-//     const userTaskIds = userTasks.map(task => task.id);
+//     const userTaskIds = userTasks.map((task) => task.id);
 
 //     if (userTaskIds.length > 0) {
 //       await prisma.taskParticipant.deleteMany({
@@ -543,42 +569,44 @@ else {
 //     });
 //     await prisma.user.delete({ where: { id: user.id } });
 
-//     return res.status(403).json({ status: 'blocked', message: 'Your account is blocked due to reports.' });
-//   }
-
-//   function localISOStringWithZ() {
-//     const now = new Date();
-//     const tzOffset = now.getTimezoneOffset() * 60000;
-//     return new Date(now - tzOffset).toISOString().slice(0, -1) + 'Z';
+//     return res.status(403).json({
+//       status: "blocked",
+//       message: "Your account is blocked due to reports.",
+//     });
 //   }
 
 //   function calcTimeout(endTime) {
 //     if (!endTime) return null;
-//     const nowStr = localISOStringWithZ();
-//     const now = new Date(nowStr);
+//     const now = new Date();
 //     const end = new Date(endTime);
 //     const diffMs = end.getTime() - now.getTime();
 //     return Math.floor(diffMs / 60000);
 //   }
 
 //   const ownTasks = user.tasks
-//     .map(task => ({
+//     .map((task) => ({
 //       ...task,
 //       isOwner: true,
-//       timeout: task.status === 'IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
+//       timeout:
+//         task.status === "IN_PROGRESS"
+//           ? calcTimeout(task.endTime)
+//           : Number(task.timeout),
 //     }))
-//     .filter(task => task.timeout !== null);
+//     .filter((task) => task.timeout !== null);
 
 //   const participatedTasks = user.taskParticipations
 //     .map(({ task }) => ({
 //       ...task,
 //       isOwner: task.userId === user.id,
-//       timeout: task.status === 'IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
+//       timeout:
+//         task.status === "IN_PROGRESS"
+//           ? calcTimeout(task.endTime)
+//           : Number(task.timeout),
 //     }))
-//     .filter(task => task.timeout !== null);
+//     .filter((task) => task.timeout !== null);
 
 //   const taskMap = new Map();
-//   [...ownTasks, ...participatedTasks].forEach(task => {
+//   [...ownTasks, ...participatedTasks].forEach((task) => {
 //     taskMap.set(task.id, task);
 //   });
 
@@ -593,59 +621,93 @@ else {
 
 //     if (diffMinutes >= 15) {
 //       return `<p id="white">${getRandomElement([
-//         'Вау, с запасом справился! 💪',
-//         'Мастер тайм-менеджмента!',
-//         'Ты сделал это быстрее, чем я успел моргнуть 👀',
-//         'Настоящий профи — всё заранее!',
+//         "Вау, с запасом справился! 💪",
+//         "Мастер тайм-менеджмента!",
+//         "Ты сделал это быстрее, чем я успел моргнуть 👀",
+//         "Настоящий профи — всё заранее!",
 //       ])}</p>`;
 //     } else if (diffMinutes >= 0) {
 //       return `<p id="white">${getRandomElement([
-//         'Успел вовремя, хорошая работа! 👍',
-//         'Как по часам ⏰',
-//         'Точно в срок — приятно видеть!',
-//         'Ты как швейцарские часы!',
+//         "Успел вовремя, хорошая работа! 👍",
+//         "Как по часам ⏰",
+//         "Точно в срок — приятно видеть!",
+//         "Ты как швейцарские часы!",
 //       ])}</p>`;
 //     } else if (diffMinutes >= -10) {
 //       return `<p id="yellow">${getRandomElement([
-//         'Чуть-чуть не успел, но всё равно молодец!',
-//         'На грани, но сойдёт 😅',
-//         'Опоздание небольшое, бывает...',
-//         'Следующий раз чуть быстрее — и будет идеально!',
+//         "Чуть-чуть не успел, но всё равно молодец!",
+//         "На грани, но сойдёт 😅",
+//         "Опоздание небольшое, бывает...",
+//         "Следующий раз чуть быстрее — и будет идеально!",
 //       ])}</p>`;
 //     } else {
 //       return `<p id="red">${getRandomElement([
-//         'Ты где пропадал? 😅',
+//         "Ты где пропадал? 😅",
 //         'Опоздание уровня "школа жизни"',
-//         'Эта задача уже покрылась пылью...',
-//         'Нужно срочно качать дедлайн-мышцу! 🕰️',
+//         "Эта задача уже покрылась пылью...",
+//         "Нужно срочно качать дедлайн-мышцу! 🕰️",
 //       ])}</p>`;
 //     }
 //   }
 
-//   const tasks = Array.from(taskMap.values()).map(task => {
-//     const amOwner = task.userId === user.id;
-//     return {
-//       id: task.id,
-//       title: task.title,
-//       timeout: task.timeout,
-//       type: task.type,
-//       status: task.status,
-//       endTime: task.endTime,
-//       owner: {
-//         id: task.user.id,
-//         name: task.user.name,
-//         icon: task.user.icon,
+// const tasks = Array.from(taskMap.values()).map((task) => {
+//   const amOwner = task.userId === user.id;
+//   const acceptedParticipants = task.participants.filter(p => p.status === "ACCEPTED");
+//   const otherParticipants = acceptedParticipants.filter(p => p.user.id !== user.id);
+
+//   let showReadyInfo = false;
+//   let isReadyToFinish = false;
+//   let readyCount = 0;
+//   let requiredReadyCount = 0;
+
+//   if (task.status === 'IN_PROGRESS' && task.type === 'MULTI') {
+//     if (amOwner && otherParticipants.length > 0) {
+//       // Владелец
+//       readyCount = otherParticipants.filter(p => p.user.ready).length;
+//       requiredReadyCount = otherParticipants.length;
+//       isReadyToFinish = readyCount === requiredReadyCount;
+//       showReadyInfo = true;
+//     } else if (!amOwner) {
+//       // Участник
+//       const selfParticipant = acceptedParticipants.find(p => p.user.id === user.id);
+//       if (selfParticipant) {
+//         readyCount = selfParticipant.user.ready ? 1 : 0;
+//         requiredReadyCount = 1;
+//         isReadyToFinish = selfParticipant.user.ready;
+//         showReadyInfo = true;
+//       }
+//     }
+//   }
+
+//   return {
+//     id: task.id,
+//     title: task.title,
+//     timeout: task.timeout,
+//     type: task.type,
+//     status: task.status,
+//     endTime: task.endTime,
+//     owner: {
+//       id: task.user.id,
+//       name: task.user.name,
+//       icon: task.user.icon,
+//     },
+//     participants: otherParticipants.map(p => ({
+//       id: p.user.id,
+//       name: p.user.name,
+//       icon: p.user.icon,
+//       _count: {
+//         tasks: p.user._count.tasks,
+//         taskParticipations: p.user._count.taskParticipations,
 //       },
-//       participants: task.participants
-//         .filter(p => amOwner || p.user.id !== user.id)
-//         .map(p => ({
-//           id: p.user.id,
-//           name: p.user.name,
-//           icon: p.user.icon,
-//         })),
-//       comment: generateTaskComment(task),
-//     };
-//   });
+//     })),
+//     comment: generateTaskComment(task),
+//     ...(showReadyInfo && {
+//       isReadyToFinish,
+//       readyCount,
+//       requiredReadyCount,
+//     }),
+//   };
+// });
 
 //   const allTasks = [...ownTasks, ...participatedTasks];
 //   const taskCounter = {
@@ -655,21 +717,19 @@ else {
 //   };
 
 //   for (const task of allTasks) {
-//     if (task.status === 'CANCELLED') taskCounter.cancelled += 1;
-//     if (task.status === 'IN_PROGRESS') taskCounter.in_progress += 1;
-//     if (task.status === 'COMPLETED') taskCounter.completed += 1;
+//     if (task.status === "CANCELLED") taskCounter.cancelled += 1;
+//     if (task.status === "IN_PROGRESS") taskCounter.in_progress += 1;
+//     if (task.status === "COMPLETED") taskCounter.completed += 1;
 //   }
-
-//   // === Добавляем процент обладателей наград ===
 
 //   const totalUsers = await prisma.user.count();
 //   const userRewards = user.rewards;
 
 //   const rewardStats = await prisma.rewards.groupBy({
-//     by: ['title'],
+//     by: ["title"],
 //     where: {
 //       title: {
-//         in: userRewards.map(r => r.title),
+//         in: userRewards.map((r) => r.title),
 //       },
 //     },
 //     _count: {
@@ -677,8 +737,8 @@ else {
 //     },
 //   });
 
-//   const rewardsWithPercentages = userRewards.map(reward => {
-//     const found = rewardStats.find(r => r.title === reward.title);
+//   const rewardsWithPercentages = userRewards.map((reward) => {
+//     const found = rewardStats.find((r) => r.title === reward.title);
 //     const count = found?._count.title || 0;
 //     const percentage = totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0;
 
@@ -688,10 +748,8 @@ else {
 //     };
 //   });
 
-//   // === Ответ ===
-
 //   return res.status(200).json({
-//     status: 'authorized',
+//     status: "authorized",
 //     tasks,
 //     taskCounter,
 //     user: {
@@ -733,45 +791,37 @@ export const Welcome = async (req, res) => {
         include: {
           user: true,
           participants: {
-          where:{
-            status:"ACCEPTED"
-          },
+            where: { status: "ACCEPTED" },
             include: {
-             
               user: {
-               select: { 
-  id: true,
-  name: true,
-  icon: true,
-  _count: {
-    select: {
-      tasks: true,
-      taskParticipations: true,
-    },
-  },
-},
-
+                select: {
+                  id: true,
+                  name: true,
+                  icon: true,
+                  _count: {
+                    select: {
+                      tasks: true,
+                      taskParticipations: true,
+                    },
+                  },
+                },
               },
             },
           },
         },
       },
       taskParticipations: {
-        where:{status:"ACCEPTED"},
-
+        where: { status: "ACCEPTED" },
         select: {
-          
+          id: true,
           task: {
             include: {
               user: true,
               participants: {
-                where:{
-                  status:"ACCEPTED"
-                },
+                where: { status: "ACCEPTED" },
                 include: {
                   user: {
-                    select: { 
-                      id: true, name: true, icon: true },
+                    select: { id: true, name: true, icon: true },
                   },
                 },
               },
@@ -787,11 +837,11 @@ export const Welcome = async (req, res) => {
       },
     },
   });
-if(user) {
-   redis.set(`user:${user.id}:online`, "true", 'EX', 10);
-}
-  if (!user) {
-  const user=  await prisma.user.create({
+
+  if (user) {
+    redis.set(`user:${user.id}:online`, "true", 'EX', 10);
+  } else {
+    const user = await prisma.user.create({
       data: {
         initData: String(parsedUserId),
         name: String(name),
@@ -847,7 +897,7 @@ if(user) {
     const now = new Date();
     const end = new Date(endTime);
     const diffMs = end.getTime() - now.getTime();
-    return Math.floor(diffMs / 60000);
+    return Math.floor(diffMs / 1000);
   }
 
   const ownTasks = user.tasks
@@ -862,9 +912,10 @@ if(user) {
     .filter((task) => task.timeout !== null);
 
   const participatedTasks = user.taskParticipations
-    .map(({ task }) => ({
+    .map(({ id: taskParticipantId, task }) => ({
       ...task,
       isOwner: task.userId === user.id,
+      taskParticipantId,
       timeout:
         task.status === "IN_PROGRESS"
           ? calcTimeout(task.endTime)
@@ -917,64 +968,71 @@ if(user) {
     }
   }
 
-const tasks = Array.from(taskMap.values()).map((task) => {
-  const amOwner = task.userId === user.id;
-  const acceptedParticipants = task.participants.filter(p => p.status === "ACCEPTED");
-  const otherParticipants = acceptedParticipants.filter(p => p.user.id !== user.id);
+  const tasks = Array.from(taskMap.values()).map((task) => {
+    const amOwner = task.userId === user.id;
+    const acceptedParticipants = task.participants.filter(p => p.status === "ACCEPTED");
+    const otherParticipants = acceptedParticipants.filter(p => p.user.id !== user.id);
 
-  let showReadyInfo = false;
-  let isReadyToFinish = false;
-  let readyCount = 0;
-  let requiredReadyCount = 0;
+    let showReadyInfo = false;
+    let isReadyToFinish = false;
+    let readyCount = 0;
+    let requiredReadyCount = 0;
 
-  if (task.status === 'IN_PROGRESS' && task.type === 'MULTI') {
-    if (amOwner && otherParticipants.length > 0) {
-      // Владелец
-      readyCount = otherParticipants.filter(p => p.user.ready).length;
-      requiredReadyCount = otherParticipants.length;
-      isReadyToFinish = readyCount === requiredReadyCount;
-      showReadyInfo = true;
-    } else if (!amOwner) {
-      // Участник
-      const selfParticipant = acceptedParticipants.find(p => p.user.id === user.id);
-      if (selfParticipant) {
-        readyCount = selfParticipant.user.ready ? 1 : 0;
-        requiredReadyCount = 1;
-        isReadyToFinish = selfParticipant.user.ready;
+    if (task.status === 'IN_PROGRESS' && task.type === 'MULTI') {
+      if (amOwner && otherParticipants.length > 0) {
+        readyCount = otherParticipants.filter(p => p.user.ready).length;
+        requiredReadyCount = otherParticipants.length;
+        isReadyToFinish = readyCount === requiredReadyCount;
         showReadyInfo = true;
+      } else if (!amOwner) {
+        const selfParticipant = acceptedParticipants.find(p => p.user.id === user.id);
+        if (selfParticipant) {
+          readyCount = selfParticipant.user.ready ? 1 : 0;
+          requiredReadyCount = 1;
+          isReadyToFinish = selfParticipant.user.ready;
+          showReadyInfo = true;
+        }
       }
     }
-  }
 
-  return {
-    id: task.id,
-    title: task.title,
-    timeout: task.timeout,
-    type: task.type,
-    status: task.status,
-    endTime: task.endTime,
-    owner: {
-      id: task.user.id,
-      name: task.user.name,
-      icon: task.user.icon,
-    },
-    participants: otherParticipants.map(p => ({
-      id: p.user.id,
-      name: p.user.name,
-      icon: p.user.icon,
-      _count: {
-        tasks: p.user._count.tasks,
-        taskParticipations: p.user._count.taskParticipations,
+    const result = {
+      id: task.id,
+      title: task.title,
+      timeout: task.timeout,
+      type: task.type,
+      status: task.status,
+      endTime: task.endTime,
+      owner: {
+        id: task.user.id,
+        name: task.user.name,
+        icon: task.user.icon,
       },
-    })),
-    comment: generateTaskComment(task),
-    ...(showReadyInfo && {
-      isReadyToFinish,
-      readyCount,
-      requiredReadyCount,
-    }),
-  };
-});
+      participants: otherParticipants.map(p => ({
+        id: p.user.id,
+        name: p.user.name,
+        icon: p.user.icon,
+        _count: {
+          tasks: p.user._count.tasks,
+          taskParticipations: p.user._count.taskParticipations,
+        },
+      })),
+      comment: generateTaskComment(task),
+      ...(showReadyInfo && {
+        isReadyToFinish,
+        readyCount,
+        requiredReadyCount,
+      }),
+    };
+
+    if (!amOwner) {
+      const myParticipant = acceptedParticipants.find(p => p.user.id === user.id);
+      if (myParticipant) {
+        result.taskParticipantId = myParticipant.id;
+      }
+    }
+
+    return result;
+  });
 
   const allTasks = [...ownTasks, ...participatedTasks];
   const taskCounter = {
