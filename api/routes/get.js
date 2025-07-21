@@ -83,17 +83,16 @@ export const Tasks = async (req, res) => {
   if (!initData) {
     return res.status(404).json({ status: 'initData is required' });
   }
-const parsedUserId = parseInitData(initData)?.user?.id;
+  const parsedUserId = parseInitData(initData)?.user?.id;
   const user = await prisma.user.findFirst({
-    where: { initData:String(parsedUserId) },
+    where: { initData: String(parsedUserId) },
     select: {
       id: true,
       taskParticipations: {
-        where:{status:'ACCEPTED'},
+        where: { status: 'ACCEPTED' },
         select: {
-          task: {    
+          task: {
             select: {
-        
               id: true,
               title: true,
               type: true,
@@ -101,13 +100,16 @@ const parsedUserId = parseInitData(initData)?.user?.id;
               timeout: true,
               endTime: true,
               participants: {
-                
+                where: { status: "ACCEPTED" },
                 select: {
-                  
+                  id: true,           // добавлено
+                  ready: true,
                   user: {
                     select: {
-                    
-                      id: true, name: true, icon: true },
+                      id: true,
+                      name: true,
+                      icon: true,
+                    },
                   },
                 },
               },
@@ -127,20 +129,22 @@ const parsedUserId = parseInitData(initData)?.user?.id;
           timeout: true,
           endTime: true,
           participants: {
-            where:{
-              status:"ACCEPTED"
-            },
+            where: { status: "ACCEPTED" },
             select: {
-              
+              id: true,             // добавлено
+              ready: true,
               user: {
-                
                 select: {
-                    _count:{
-                        select:{
-                          tasks:true,
-                          taskParticipations:true
-                        }
-                      }, id: true, name: true, icon: true },
+                  _count: {
+                    select: {
+                      tasks: true,
+                      taskParticipations: true,
+                    },
+                  },
+                  id: true,
+                  name: true,
+                  icon: true,
+                },
               },
             },
           },
@@ -159,10 +163,8 @@ const parsedUserId = parseInitData(initData)?.user?.id;
   function calcTimeout(endTime) {
     if (!endTime) return null;
     const nowStr = localISOStringWithZ();
-const now = new Date(nowStr); 
-
-
-const end = new Date(endTime);
+    const now = new Date(nowStr);
+    const end = new Date(endTime);
     const diffMs = end.getTime() - now.getTime();
     return Math.floor(diffMs / 60000);
   }
@@ -170,13 +172,13 @@ const end = new Date(endTime);
   const ownTasks = user.tasks.map(task => ({
     ...task,
     isOwner: true,
-    timeout: task.status=='IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
+    timeout: task.status == 'IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
   }));
 
   const participatedTasks = user.taskParticipations.map(({ task }) => ({
     ...task,
     isOwner: task.user.id === user.id,
-    timeout: task.status=='IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
+    timeout: task.status == 'IN_PROGRESS' ? calcTimeout(task.endTime) : Number(task.timeout),
   }));
 
   // Удалим дубли по ID
@@ -184,65 +186,109 @@ const end = new Date(endTime);
   [...ownTasks, ...participatedTasks].forEach(task => {
     taskMap.set(task.id, task);
   });
-function getRandomElement(arr) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
 
-function generateTaskComment(task, now = new Date()) {
-  if (!task.endTime) return null;
+  function getRandomElement(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
 
-  const end = new Date(task.endTime);
-  const diffMinutes = Math.floor((end - now) / 60000); // end - now
+  function generateTaskComment(task, now = new Date()) {
+    if (!task.endTime) return null;
 
-if (diffMinutes >= 15) {
-  return `<p id="white">${getRandomElement([
-    'Вау, с запасом справился! 💪',
-    'Мастер тайм-менеджмента!',
-    'Ты сделал это быстрее, чем я успел моргнуть 👀',
-    'Настоящий профи — всё заранее!',
-  ])}</p>`;
-} else if (diffMinutes >= 0) {
-  return `<p id="white">${getRandomElement([
-    'Успел вовремя, хорошая работа! 👍',
-    'Как по часам ⏰',
-    'Точно в срок — приятно видеть!',
-    'Ты как швейцарские часы!',
-  ])}</p>`;
-} else if (diffMinutes >= -10) {
-  return `<p id="yellow">${getRandomElement([
-    'Чуть-чуть не успел, но всё равно молодец!',
-    'На грани, но сойдёт 😅',
-    'Опоздание небольшое, бывает...',
-    'Следующий раз чуть быстрее — и будет идеально!',
-  ])}</p>`;
-} else {
-  return `<p id="red">${getRandomElement([
-    'Ты где пропадал? 😅',
-    'Опоздание уровня "школа жизни"',
-    'Эта задача уже покрылась пылью...',
-    'Нужно срочно качать дедлайн-мышцу! 🕰️',
-  ])}</p>`;
-}
+    const end = new Date(task.endTime);
+    const diffMinutes = Math.floor((end - now) / 60000);
 
-}
+    if (diffMinutes >= 15) {
+      return `<p id="white">${getRandomElement([
+        'Вау, с запасом справился! 💪',
+        'Мастер тайм-менеджмента!',
+        'Ты сделал это быстрее, чем я успел моргнуть 👀',
+        'Настоящий профи — всё заранее!',
+      ])}</p>`;
+    } else if (diffMinutes >= 0) {
+      return `<p id="white">${getRandomElement([
+        'Успел вовремя, хорошая работа! 👍',
+        'Как по часам ⏰',
+        'Точно в срок — приятно видеть!',
+        'Ты как швейцарские часы!',
+      ])}</p>`;
+    } else if (diffMinutes >= -10) {
+      return `<p id="yellow">${getRandomElement([
+        'Чуть-чуть не успел, но всё равно молодец!',
+        'На грани, но сойдёт 😅',
+        'Опоздание небольшое, бывает...',
+        'Следующий раз чуть быстрее — и будет идеально!',
+      ])}</p>`;
+    } else {
+      return `<p id="red">${getRandomElement([
+        'Ты где пропадал? 😅',
+        'Опоздание уровня "школа жизни"',
+        'Эта задача уже покрылась пылью...',
+        'Нужно срочно качать дедлайн-мышцу! 🕰️',
+      ])}</p>`;
+    }
+  }
 
-  const tasks = Array.from(taskMap.values()).map(task => ({
-    id: task.id,
-    title: task.title,
-    type: task.type,
-    status: task.status,
-    timeout: task.timeout,
-    endTime: task.endTime,
-    owner: task.user,
-    participants: task.participants
-      .filter(p => p.user.id !== user.id) // Не включаем самого пользователя в участники
-      .map(p => p.user),
-       comment: generateTaskComment(task),
+  const tasks = Array.from(taskMap.values()).map(task => {
+    const isOwner = task.user.id === user.id;
 
-  }));
+    // Участники кроме текущего пользователя
+    const otherParticipants = task.participants.filter(p => p.user.id !== user.id);
+
+    // Для не владельца — получаем id записи taskParticipant
+    let taskParticipantId = null;
+    if (!isOwner) {
+      const selfParticipant = task.participants.find(p => p.user.id === user.id);
+      if (selfParticipant) {
+        taskParticipantId = selfParticipant.id;
+      }
+    }
+
+    // Определяем isReady, readyCount, requiredReadyCount
+    let showReadyInfo = false;
+    let isReadyToFinish = false;
+    let readyCount = 0;
+    let requiredReadyCount = 0;
+
+    if (task.status === 'IN_PROGRESS' && task.type === 'MULTI') {
+      if (isOwner && otherParticipants.length > 0) {
+        readyCount = otherParticipants.filter(p => p.ready).length;
+        requiredReadyCount = otherParticipants.length;
+        isReadyToFinish = readyCount === requiredReadyCount;
+        showReadyInfo = true;
+      } else if (!isOwner) {
+        const selfParticipant = task.participants.find(p => p.user.id === user.id);
+        if (selfParticipant) {
+          readyCount = selfParticipant.ready ? 1 : 0;
+          requiredReadyCount = 1;
+          isReadyToFinish = selfParticipant.ready;
+          showReadyInfo = true;
+        }
+      }
+    }
+
+    return {
+      id: task.id,
+      title: task.title,
+      type: task.type,
+      status: task.status,
+      timeout: task.timeout,
+      endTime: task.endTime,
+      owner: task.user,
+      participants: otherParticipants.map(p => p.user),
+      comment: generateTaskComment(task),
+      ...(showReadyInfo && {
+        isReadyToFinish,
+        readyCount,
+        requiredReadyCount,
+      }),
+      ...( !isOwner && { taskParticipantId } ),
+    };
+  });
 
   return res.status(200).json({ status: 'success', data: tasks });
 };
+
+
 export const User = async (req, res) => {
   const initData = req.headers['tg-init-data'];
 
@@ -748,40 +794,58 @@ export const CompleteTask = async (req, res) => {
   const initData = req.headers['tg-init-data'];
 
   if (!initData) {
-    return res.status(404).json({ status: 'initData is required' });
+    return res.status(400).json({ status: 'initData is required' });
   }
 
   if (!id) {
     return res.status(400).json({ status: 'Invalid Task ID' });
   }
-const parsedUserId = parseInitData(initData)?.user?.id;
+
+  const parsedUserId = parseInitData(initData)?.user?.id;
+
   const currentUser = await prisma.user.findFirst({
-    where: { initData:String(parsedUserId) },
+    where: { initData: String(parsedUserId) },
   });
 
   if (!currentUser) {
-    return res.status(404).json({ status: 'User not authorized' });
+    return res.status(401).json({ status: 'User not authorized' });
   }
 
-  const userid = currentUser.id;
-
-  const check = await prisma.task.findFirst({
-    where: { id, userId: userid },
-    include: { participants: true },
+  const task = await prisma.task.findFirst({
+    where: {
+      id,
+      userId: currentUser.id,
+    },
+    include: {
+      participants: true,
+    },
   });
 
-  if (!check) {
-    return res.status(404).json({ status: 'Task not found' });
+  if (!task) {
+    return res.status(404).json({ status: 'Task not found or you are not the owner' });
   }
 
-  if (check.status === 'CANCELLED') {
+  if (task.status === 'CANCELLED') {
     return res.status(400).json({ status: 'Task already cancelled' });
   }
 
-  if (check.status === 'COMPLETED') {
+  if (task.status === 'COMPLETED') {
     return res.status(400).json({ status: 'Task already completed' });
   }
 
+  // Проверяем, все ли участники (кроме автора) нажали ready
+  const otherParticipants = task.participants.filter(p => p.userId !== currentUser.id);
+  const allReady = otherParticipants.every(p => p.ready);
+
+  if (!allReady) {
+    return res.status(400).json({
+      status: 'Not all participants are ready',
+      readyCount: otherParticipants.filter(p => p.ready).length,
+      requiredReadyCount: otherParticipants.length,
+    });
+  }
+
+  // Функция для подсчета оставшегося времени
   function calcTimeout(endTime) {
     if (!endTime) return null;
     const now = new Date();
@@ -790,35 +854,28 @@ const parsedUserId = parseInitData(initData)?.user?.id;
     return Math.floor(diffMs / 60000).toString();
   }
 
-  const timeout = calcTimeout(check.endTime);
+  const timeout = calcTimeout(task.endTime);
 
-  const complete = await prisma.task.update({
+  const updatedTask = await prisma.task.update({
     where: { id },
     data: {
       status: 'COMPLETED',
-      timeout: timeout ?? check.timeout,
+      timeout: timeout ?? task.timeout,
     },
   });
 
-  // Участники + автор
-  const allUserIds = [
-    check.userId,
-    ...check.participants.map(p => p.userId),
-  ];
-const nowStr = localISOStringWithZ();
-  const now = new Date(nowStr);
-  const createdAt = new Date(check.createdAt);
+  const allUserIds = [task.userId, ...task.participants.map(p => p.userId)];
+  const now = new Date(localISOStringWithZ());
+  const createdAt = new Date(task.createdAt);
   const minutesSinceCreated = Math.floor((now - createdAt) / 60000);
 
-  const rewards = [];
+  const rewards = [
+    {
+      title: `Задача "${task.title}" завершена!`,
+      description: `Поздравляем с успешным выполнением задачи "${task.title}"`,
+    },
+  ];
 
-  // Базовая награда за выполнение
-  rewards.push({
-    title: `Задача "${check.title}" завершена!`,
-    description: `Поздравляем с успешным выполнением задачи "${check.title}"`,
-  });
-
-  // Условная награда за скорость
   if (minutesSinceCreated <= 60) {
     rewards.push({
       title: 'Молниеносный',
@@ -826,7 +883,6 @@ const nowStr = localISOStringWithZ();
     });
   }
 
-  // Создать награды всем участникам
   await Promise.all(
     allUserIds.flatMap(userId =>
       rewards.map(r =>
@@ -842,12 +898,13 @@ const nowStr = localISOStringWithZ();
   );
 
   SendMessage(
-    'Задача "' + complete.title + '" была успешно выполнена!',
+    `Задача "${updatedTask.title}" была успешно выполнена!`,
     currentUser.chatId
   );
 
-  return res.status(200).json({ status: 'success', data: complete });
+  return res.status(200).json({ status: 'success', data: updatedTask });
 };
+
 export const Chart = async (req, res) => {
   const initData = req.headers['tg-init-data'];
 
@@ -981,4 +1038,54 @@ const checkUser = await prisma.user.findFirst({
 SendMessage('Ваш запрос на добавление в таск был отказан', checkUser.chatId);
 
   return res.status(200).json({ status: 'success', data: accept });
+}
+export const Ready = async(req,res) => {
+    const id = req.params.id;
+  const initData = req.headers['tg-init-data'];
+
+  if (!initData) {
+    return res.status(404).json({ status: 'initData is required' });
+  }
+
+  if (!id) {
+    return res.status(400).json({ status: 'Invalid Friend ID' });
+  }
+
+  const check = await prisma.taskParticipant.findFirst({
+    where: { id }
+  });
+
+  if (!check) {
+    return res.status(404).json({ status: 'Task not found' });
+  }
+  const parsedUserId = await parseInitData(initData)?.user?.id;
+
+  if(!parsedUserId) {
+     return res.status(404).json({ status: 'initData is not found' });
+  }
+
+  console.log(parsedUserId);
+  
+  const getUserId =await prisma.user.findFirst({
+    where:{
+      initData:String(parsedUserId)
+    }
+  })
+  
+  const ready = await prisma.taskParticipant.updateMany({
+  where: {
+    taskId: check.taskId,
+    userId: getUserId.id,
+  },
+  data: {
+    ready: true,
+  },
+});
+
+  if(ready) {
+    return res.status(200).json({ status: 'task ready' });
+  }
+  else {
+    return res.status(404).json({ status: 'task not found, or you not particians for this task' });
+  }
 }

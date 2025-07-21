@@ -1,7 +1,7 @@
 import express from 'express';
 import {CreateTask, GetUsers, Report, Search, Welcome } from './routes/post.js';
 import cors from 'cors'
-import { AcceptTask, CancelTask, Chart, CompleteTask, DeleteOrCancelFriend, FriendAccept, FriendAdd, Friends, RejectTask, Tasks, Top, User } from './routes/get.js';
+import { AcceptTask, CancelTask, Chart, CompleteTask, DeleteOrCancelFriend, FriendAccept, FriendAdd, Friends, Ready, RejectTask, Tasks, Top, User } from './routes/get.js';
 
 
 const app = express();
@@ -29,5 +29,6 @@ app.get('/api/user/task/complete/:id',CompleteTask)
 app.get('/api/user/task/cancel/:id',CancelTask)
 app.get('/api/user/chart',Chart) 
 app.get('/api/task/accept/:id',AcceptTask);
-app.get('/api/task/reject/:id',RejectTask)
+app.get('/api/task/reject/:id',RejectTask);
+app.get('/api/task/ready/:id',Ready)
 app.listen(process.env.PORT)

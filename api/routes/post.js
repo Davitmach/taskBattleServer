@@ -917,34 +917,64 @@ if(user) {
     }
   }
 
-  const tasks = Array.from(taskMap.values()).map((task) => {
-    const amOwner = task.userId === user.id;
-    return {
-      id: task.id,
-      title: task.title,
-      timeout: task.timeout,
-      type: task.type,
-      status: task.status,
-      endTime: task.endTime,
-      owner: {
-        id: task.user.id,
-        name: task.user.name,
-        icon: task.user.icon,
+const tasks = Array.from(taskMap.values()).map((task) => {
+  const amOwner = task.userId === user.id;
+  const acceptedParticipants = task.participants.filter(p => p.status === "ACCEPTED");
+  const otherParticipants = acceptedParticipants.filter(p => p.user.id !== user.id);
+
+  let showReadyInfo = false;
+  let isReadyToFinish = false;
+  let readyCount = 0;
+  let requiredReadyCount = 0;
+
+  if (task.status === 'IN_PROGRESS' && task.type === 'MULTI') {
+    if (amOwner && otherParticipants.length > 0) {
+      // Владелец
+      readyCount = otherParticipants.filter(p => p.user.ready).length;
+      requiredReadyCount = otherParticipants.length;
+      isReadyToFinish = readyCount === requiredReadyCount;
+      showReadyInfo = true;
+    } else if (!amOwner) {
+      // Участник
+      const selfParticipant = acceptedParticipants.find(p => p.user.id === user.id);
+      if (selfParticipant) {
+        readyCount = selfParticipant.user.ready ? 1 : 0;
+        requiredReadyCount = 1;
+        isReadyToFinish = selfParticipant.user.ready;
+        showReadyInfo = true;
+      }
+    }
+  }
+
+  return {
+    id: task.id,
+    title: task.title,
+    timeout: task.timeout,
+    type: task.type,
+    status: task.status,
+    endTime: task.endTime,
+    owner: {
+      id: task.user.id,
+      name: task.user.name,
+      icon: task.user.icon,
+    },
+    participants: otherParticipants.map(p => ({
+      id: p.user.id,
+      name: p.user.name,
+      icon: p.user.icon,
+      _count: {
+        tasks: p.user._count.tasks,
+        taskParticipations: p.user._count.taskParticipations,
       },
-      participants: task.participants
-        .filter((p) => amOwner || p.user.id !== user.id)
-        .map((p) => ({
-          id: p.user.id,
-          name: p.user.name,
-          icon: p.user.icon,
-          _count: {
-                        tasks: p.user._count.tasks,
-                        taskParticipations: p.user._count.taskParticipations
-                    },
-        })),
-      comment: generateTaskComment(task),
-    };
-  });
+    })),
+    comment: generateTaskComment(task),
+    ...(showReadyInfo && {
+      isReadyToFinish,
+      readyCount,
+      requiredReadyCount,
+    }),
+  };
+});
 
   const allTasks = [...ownTasks, ...participatedTasks];
   const taskCounter = {
