@@ -243,6 +243,7 @@ export const Tasks = async (req, res) => {
       }
     }
 
+    
     // Определяем isReady, readyCount, requiredReadyCount
     let showReadyInfo = false;
     let isReadyToFinish = false;
