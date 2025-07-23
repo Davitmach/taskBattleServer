@@ -235,13 +235,17 @@ export const Tasks = async (req, res) => {
     const otherParticipants = task.participants.filter(p => p.user.id !== user.id);
 
     // Для не владельца — получаем id записи taskParticipant
-    let taskParticipantId = null;
-    if (!isOwner) {
-      const selfParticipant = task.participants.find(p => p.user.id === user.id);
-      if (selfParticipant) {
-        taskParticipantId = selfParticipant.id;
-      }
-    }
+   let taskParticipantId = null;
+let ready = false;
+
+if (!isOwner) {
+  const selfParticipant = task.participants.find(p => p.user.id === user.id);
+  if (selfParticipant) {
+    taskParticipantId = selfParticipant.id;
+    ready = selfParticipant.ready;
+  }
+}
+
 
     
     // Определяем isReady, readyCount, requiredReadyCount
@@ -267,23 +271,26 @@ export const Tasks = async (req, res) => {
       }
     }
 
-    return {
-      id: task.id,
-      title: task.title,
-      type: task.type,
-      status: task.status,
-      timeout: task.timeout,
-      endTime: task.endTime,
-      owner: task.user,
-      participants: otherParticipants.map(p => p.user),
-      comment: generateTaskComment(task),
-      ...(showReadyInfo && {
-        isReadyToFinish,
-        readyCount,
-        requiredReadyCount,
-      }),
-      ...( !isOwner && { taskParticipantId } ),
-    };
+  return {
+  id: task.id,
+  title: task.title,
+  type: task.type,
+  status: task.status,
+  timeout: task.timeout,
+  endTime: task.endTime,
+  owner: task.user,
+  participants: otherParticipants.map(p => p.user),
+  comment: generateTaskComment(task),
+  ...(showReadyInfo && {
+    isReadyToFinish,
+    readyCount,
+    requiredReadyCount,
+  }),
+  ...( !isOwner && {
+    taskParticipantId,
+    ready,
+  }),
+};
   });
 
   return res.status(200).json({ status: 'success', data: tasks });

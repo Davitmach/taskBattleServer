@@ -787,16 +787,19 @@ export const Welcome = async (req, res) => {
       chatId: true,
       createdAt: true,
       updatedAt: true,
+      
       tasks: {
         include: {
           user: true,
           participants: {
             where: { status: "ACCEPTED" },
+            
             include: {
               user: {
                 select: {
                   id: true,
                   name: true,
+                  
                   icon: true,
                   _count: {
                     select: {
@@ -814,6 +817,7 @@ export const Welcome = async (req, res) => {
         where: { status: "ACCEPTED" },
         select: {
           id: true,
+          ready:true,
           task: {
             include: {
               user: true,
@@ -821,7 +825,7 @@ export const Welcome = async (req, res) => {
                 where: { status: "ACCEPTED" },
                 include: {
                   user: {
-                    select: { id: true, name: true, icon: true },
+                    select: {  id: true, name: true, icon: true },
                   },
                 },
               },
@@ -968,71 +972,81 @@ export const Welcome = async (req, res) => {
     }
   }
 
-  const tasks = Array.from(taskMap.values()).map((task) => {
-    const amOwner = task.userId === user.id;
-    const acceptedParticipants = task.participants.filter(p => p.status === "ACCEPTED");
-    const otherParticipants = acceptedParticipants.filter(p => p.user.id !== user.id);
+const tasks = Array.from(taskMap.values()).map((task) => {
+  const isOwner = task.user.id === user.id;
 
-    let showReadyInfo = false;
-    let isReadyToFinish = false;
-    let readyCount = 0;
-    let requiredReadyCount = 0;
+  const acceptedParticipants = task.participants.filter(p => p.status === 'ACCEPTED');
 
-    if (task.status === 'IN_PROGRESS' && task.type === 'MULTI') {
-      if (amOwner && otherParticipants.length > 0) {
-        readyCount = otherParticipants.filter(p => p.user.ready).length;
-        requiredReadyCount = otherParticipants.length;
-        isReadyToFinish = readyCount === requiredReadyCount;
+  const otherParticipants = acceptedParticipants.filter(p => p.user.id !== user.id);
+
+  // Найдём taskParticipantId и ready для текущего пользователя
+  let taskParticipantId = null;
+  let ready = false;
+
+  if (!isOwner) {
+    const selfParticipant = acceptedParticipants.find(p => p.user.id === user.id);
+    if (selfParticipant) {
+      taskParticipantId = selfParticipant.id;
+      ready = selfParticipant.ready;
+    }
+  }
+
+  let showReadyInfo = false;
+  let isReadyToFinish = false;
+  let readyCount = 0;
+  let requiredReadyCount = 0;
+
+  if (task.status === 'IN_PROGRESS' && task.type === 'MULTI') {
+    if (isOwner && otherParticipants.length > 0) {
+      readyCount = otherParticipants.filter(p => p.ready).length;
+      requiredReadyCount = otherParticipants.length;
+      isReadyToFinish = readyCount === requiredReadyCount;
+      showReadyInfo = true;
+    } else if (!isOwner) {
+      const selfParticipant = acceptedParticipants.find(p => p.user.id === user.id);
+      if (selfParticipant) {
+        readyCount = selfParticipant.ready ? 1 : 0;
+        requiredReadyCount = 1;
+        isReadyToFinish = selfParticipant.ready;
         showReadyInfo = true;
-      } else if (!amOwner) {
-        const selfParticipant = acceptedParticipants.find(p => p.user.id === user.id);
-        if (selfParticipant) {
-          readyCount = selfParticipant.user.ready ? 1 : 0;
-          requiredReadyCount = 1;
-          isReadyToFinish = selfParticipant.user.ready;
-          showReadyInfo = true;
-        }
       }
     }
+  }
 
-    const result = {
-      id: task.id,
-      title: task.title,
-      timeout: task.timeout,
-      type: task.type,
-      status: task.status,
-      endTime: task.endTime,
-      owner: {
-        id: task.user.id,
-        name: task.user.name,
-        icon: task.user.icon,
+  return {
+    id: task.id,
+    title: task.title,
+    timeout: task.timeout,
+    type: task.type,
+    status: task.status,
+    endTime: task.endTime,
+    owner: {
+      id: task.user.id,
+      name: task.user.name,
+      icon: task.user.icon,
+    },
+    participants: otherParticipants.map(p => ({
+      id: p.user.id,
+      name: p.user.name,
+      icon: p.user.icon,
+      _count: {
+        tasks: p.user._count.tasks,
+        taskParticipations: p.user._count.taskParticipations,
       },
-      participants: otherParticipants.map(p => ({
-        id: p.user.id,
-        name: p.user.name,
-        icon: p.user.icon,
-        _count: {
-          tasks: p.user._count.tasks,
-          taskParticipations: p.user._count.taskParticipations,
-        },
-      })),
-      comment: generateTaskComment(task),
-      ...(showReadyInfo && {
-        isReadyToFinish,
-        readyCount,
-        requiredReadyCount,
-      }),
-    };
+    })),
+    comment: generateTaskComment(task),
+    ...(showReadyInfo && {
+      isReadyToFinish,
+      readyCount,
+      requiredReadyCount,
+    }),
+    ...(!isOwner && {
+      taskParticipantId,
+      ready,
+    }),
+  };
+});
 
-    if (!amOwner) {
-      const myParticipant = acceptedParticipants.find(p => p.user.id === user.id);
-      if (myParticipant) {
-        result.taskParticipantId = myParticipant.id;
-      }
-    }
-
-    return result;
-  });
 
   const allTasks = [...ownTasks, ...participatedTasks];
   const taskCounter = {
