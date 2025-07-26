@@ -841,21 +841,30 @@ export const Welcome = async (req, res) => {
       },
     },
   });
+if (user) {
+  // Обновляем имя и иконку, если они изменились
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      name: String(name),
+      icon: String(icon),
+    },
+  });
 
-  if (user) {
-    redis.set(`user:${user.id}:online`, "true", 'EX', 10);
-  } else {
-    const user = await prisma.user.create({
-      data: {
-        initData: String(parsedUserId),
-        name: String(name),
-        icon: String(icon),
-        chatId: String(chatId),
-      },
-    });
-    redis.set(`user:${user.id}:online`, "true", 'EX', 10);
-    return res.status(404).json({ status: "unauthorized" });
-  }
+  redis.set(`user:${user.id}:online`, "true", 'EX', 10);
+} else {
+  const newUser = await prisma.user.create({
+    data: {
+      initData: String(parsedUserId),
+      name: String(name),
+      icon: String(icon),
+      chatId: String(chatId),
+    },
+  });
+  redis.set(`user:${newUser.id}:online`, "true", 'EX', 10);
+  return res.status(404).json({ status: "unauthorized" });
+}
+
 
   const reports = await prisma.reports.findMany({
     where: { receiverId: user.id },
