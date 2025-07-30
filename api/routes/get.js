@@ -423,28 +423,31 @@ const userRewards = user.rewards;
 
 // 3. Для каждой награды считаем, у скольких пользователей она есть
 const rewardIds = userRewards.map(r => r.id);
-
-const rewardOccurrences = await prisma.rewards.groupBy({
-  by: ['title'],
+const rewardStats = await prisma.rewards.findMany({
   where: {
-    title: {
-      in: userRewards.map(r => r.title)
-    }
+    title: { in: userRewards.map(r => r.title) },
   },
-  _count: {
-     userId: true
-  }
+  distinct: ['title', 'userId'],
+  select: {
+    title: true,
+    userId: true,
+  },
 });
+const rewardCounts = rewardStats.reduce((acc, { title }) => {
+  acc[title] = (acc[title] || 0) + 1;
+  return acc;
+}, {});
+
+
 
 // 4. Добавляем процент к каждой награде
-const rewardsWithPercentages = userRewards.map((reward) => {
-  const found = rewardStats.find((r) => r.title === reward.title);
-  const userCount = found?._count.userId || 0;
-  const percentage = totalUsers > 0 ? Math.min(100, Math.round((userCount / totalUsers) * 100)) : 0;
+const rewardsWithPercentages = userRewards.map(reward => {
+  const count = rewardCounts[reward.title] || 0;
+  const percentage = totalUsers > 0 ? Math.min(Math.round((count / totalUsers) * 100), 100) : 0;
 
   return {
     ...reward,
-    percentage,
+    percentage
   };
 });
 

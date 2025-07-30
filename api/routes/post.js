@@ -1073,17 +1073,18 @@ const tasks = Array.from(taskMap.values()).map((task) => {
   const totalUsers = await prisma.user.count();
   const userRewards = user.rewards;
 
-  const rewardStats = await prisma.rewards.groupBy({
-    by: ["title"],
-    where: {
-      title: {
-        in: userRewards.map((r) => r.title),
-      },
+const rewardStats = await prisma.rewards.groupBy({
+  by: ["title"],
+  where: {
+    title: {
+      in: userRewards.map((r) => r.title),
     },
-    _count: {
-      userId: true
-    },
-  });
+  },
+  _count: {
+    userId: true, // считаем уникальных пользователей
+  },
+});
+
 
 const rewardsWithPercentages = userRewards.map((reward) => {
   const found = rewardStats.find((r) => r.title === reward.title);
@@ -1095,6 +1096,7 @@ const rewardsWithPercentages = userRewards.map((reward) => {
     percentage,
   };
 });
+
 
 
   return res.status(200).json({
