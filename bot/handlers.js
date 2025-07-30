@@ -116,7 +116,7 @@ console.log(add);
     await ctx.answerCbQuery();
 }
 else {
-   await ctx.editMessageText("Не актуально... запрос был удален");
+   await ctx.editMessageText("Не актуально...");
     await ctx.answerCbQuery();
 }
   } else if (data.startsWith("reject_friend_")) {
@@ -144,7 +144,7 @@ if(check.length>0) {
     await ctx.answerCbQuery();
   }
   else {
-    await ctx.editMessageText("Не актуально... запрос был удален");
+    await ctx.editMessageText("Не актуально...");
     await ctx.answerCbQuery();
   }
   }
@@ -172,7 +172,7 @@ console.log(add);
     await ctx.answerCbQuery();
 }
 else {
-   await ctx.editMessageText("Не актуально... запрос был удален");
+   await ctx.editMessageText("Не актуально...");
     await ctx.answerCbQuery();
   }
 
@@ -207,7 +207,7 @@ if(check.length>0) {
     await ctx.answerCbQuery();
   }
   else {
-    await ctx.editMessageText("Не актуально... запрос был удален");
+    await ctx.editMessageText("Не актуально...");
     await ctx.answerCbQuery();
   }
 
