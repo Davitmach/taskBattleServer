@@ -452,6 +452,7 @@ const rewardsWithPercentages = userRewards.map(reward => {
 });
 
 
+
   // Проверка, является ли targetUserId другом currentUser
   const friendRelation = await prisma.userFriend.findFirst({
     where: {
@@ -524,7 +525,7 @@ const rewardsWithPercentages = userRewards.map(reward => {
     taskCounter,
     friend: friendStatus,
     friends: friendsWithTaskCounts,
-    rewards: rewardsWithPercentage,
+    rewards: rewardsWithPercentages,
      online: Boolean(isOnline)
   }
 });
