@@ -1081,20 +1081,21 @@ const tasks = Array.from(taskMap.values()).map((task) => {
       },
     },
     _count: {
-      title: true,
+      userId: true
     },
   });
 
-  const rewardsWithPercentages = userRewards.map((reward) => {
-    const found = rewardStats.find((r) => r.title === reward.title);
-    const count = found?._count.title || 0;
-    const percentage = totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0;
+const rewardsWithPercentages = userRewards.map((reward) => {
+  const found = rewardStats.find((r) => r.title === reward.title);
+  const userCount = found?._count.userId || 0;
+  const percentage = totalUsers > 0 ? Math.min(100, Math.round((userCount / totalUsers) * 100)) : 0;
 
-    return {
-      ...reward,
-      percentage,
-    };
-  });
+  return {
+    ...reward,
+    percentage,
+  };
+});
+
 
   return res.status(200).json({
     status: "authorized",
